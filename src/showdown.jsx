@@ -1,199 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, addDoc, getDoc, getDocs, updateDoc } from 'firebase/firestore';
-
-// Player Card Data for both teams
-const teams = {
-  home: {
-    name: 'Home Team',
-    color: 'red',
-    pitchers: [
-      { 
-        id: 'h_p_1',
-        name: 'Zarry Bito',
-        type: 'pitcher',
-        handedness: 'left',
-        stats: { control: 4, pos: 'SP', ip: 6 },
-        chart: [
-          { roll: [1, 3], result: 'out', text: 'Out (PU)', sticker: '' },
-          { roll: [4, 9], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
-          { roll: [10, 13], result: 'out', text: 'Out (GB)', sticker: '' },
-          { roll: [14, 17], result: 'out', text: 'Out (FB)', sticker: '' },
-          { roll: [18, 23], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [24, 30], result: 'homerun', text: 'Home Run', sticker: 'XBH' },
-        ]
-      },
-      { 
-        id: 'h_p_2',
-        name: 'Trey Vancini',
-        type: 'pitcher',
-        handedness: 'right',
-        stats: { control: 5, pos: 'RP', ip: 2 },
-        chart: [
-          { roll: [1, 5], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
-          { roll: [6, 12], result: 'out', text: 'Out (FB)', sticker: '' },
-          { roll: [13, 17], result: 'out', text: 'Out (GB)', sticker: '' },
-          { roll: [18, 20], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [21, 30], result: 'homerun', text: 'Home Run', sticker: 'XBH' },
-        ]
-      }
-    ],
-    batters: [
-      { 
-        id: 'h_b_1', 
-        name: 'Ace Chapman', 
-        type: 'batter',
-        handedness: 'right',
-        stats: { ob: 10, pwr: 9 }, 
-        chart: [
-          { roll: [1, 4], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-          { roll: [5, 7], result: 'walk', text: 'Walk', sticker: 'BB' },
-          { roll: [8, 14], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [15, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-          { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-        ]
-      },
-      { 
-        id: 'h_b_2',
-        name: 'Blake Burton', 
-        type: 'batter',
-        handedness: 'left',
-        stats: { ob: 5, pwr: 10 }, 
-        chart: [
-          { roll: [1, 7], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-          { roll: [8, 14], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [15, 17], result: 'double', text: 'Double', sticker: 'XBH' },
-          { roll: [18, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-        ]
-      },
-      { 
-        id: 'h_b_3',
-        name: 'Ohhei Shotani', 
-        type: 'batter',
-        handedness: 'right',
-        stats: { ob: 10, pwr: 9 }, 
-        chart: [
-          { roll: [1, 5], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-          { roll: [6, 12], result: 'walk', text: 'Walk', sticker: 'BB' },
-          { roll: [13, 16], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [15, 15], result: 'double', text: 'Double', sticker: 'XBH' },
-          { roll: [16, 16], result: 'triple', text: 'Triple', sticker: 'XBH' },
-          { roll: [17, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-        ]
-      },
-      { 
-        id: 'h_b_4',
-        name: 'Jeter Darrison',
-        type: 'batter',
-        handedness: 'switch',
-        stats: {
-          right: { ob: 8, pwr: 11 },
-          left: { ob: 12, pwr: 8 }
-        },
-        chart: [
-          { roll: [1, 5], result: 'out', text: 'Out (FB)', sticker: 'FB' },
-          { roll: [6, 12], result: 'walk', text: 'Walk', sticker: 'BB' },
-          { roll: [13, 16], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [17, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-          { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-        ]
-      }
-    ]
-  },
-  away: {
-    name: 'Away Team',
-    color: 'blue',
-    pitchers: [
-      {
-        id: 'a_p_1',
-        name: 'Max Scherzer',
-        type: 'pitcher',
-        handedness: 'right',
-        stats: { control: 5, pos: 'SP', ip: 7 },
-        chart: [
-          { roll: [1, 5], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
-          { roll: [6, 10], result: 'out', text: 'Out (PU)', sticker: '' },
-          { roll: [11, 14], result: 'out', text: 'Out (GB)', sticker: '' },
-          { roll: [15, 17], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [18, 20], result: 'homerun', text: 'Home Run', sticker: 'XBH' },
-        ]
-      },
-      {
-        id: 'a_p_2',
-        name: 'Clayton Kershaw',
-        type: 'pitcher',
-        handedness: 'left',
-        stats: { control: 6, pos: 'RP', ip: 3 },
-        chart: [
-          { roll: [1, 8], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
-          { roll: [9, 13], result: 'out', text: 'Out (PU)', sticker: '' },
-          { roll: [14, 16], result: 'out', text: 'Out (GB)', sticker: '' },
-          { roll: [17, 19], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [20, 30], result: 'homerun', text: 'Home Run', sticker: 'XBH' },
-        ]
-      }
-    ],
-    batters: [
-      {
-        id: 'a_b_1',
-        name: 'Mike Trout',
-        type: 'batter',
-        handedness: 'right',
-        stats: { ob: 11, pwr: 10 },
-        chart: [
-          { roll: [1, 3], result: 'out', text: 'Out (FB)', sticker: 'FB' },
-          { roll: [4, 6], result: 'walk', text: 'Walk', sticker: 'BB' },
-          { roll: [7, 15], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [16, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-          { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-        ]
-      },
-      {
-        id: 'a_b_2',
-        name: 'Mookie Betts',
-        type: 'batter',
-        handedness: 'right',
-        stats: { ob: 12, pwr: 9 },
-        chart: [
-          { roll: [1, 2], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-          { roll: [3, 10], result: 'walk', text: 'Walk', sticker: 'BB' },
-          { roll: [11, 15], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [16, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-          { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-        ]
-      },
-      {
-        id: 'a_b_3',
-        name: 'Ronald Acuña Jr.',
-        type: 'batter',
-        handedness: 'right',
-        stats: { ob: 9, pwr: 12 },
-        chart: [
-          { roll: [1, 4], result: 'out', text: 'Out (FB)', sticker: 'FB' },
-          { roll: [5, 10], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [11, 15], result: 'walk', text: 'Walk', sticker: 'BB' },
-          { roll: [16, 17], result: 'double', text: 'Double', sticker: 'XBH' },
-          { roll: [18, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-        ]
-      },
-      {
-        id: 'a_b_4',
-        name: 'Bryce Harper',
-        type: 'batter',
-        handedness: 'left',
-        stats: { ob: 10, pwr: 11 },
-        chart: [
-          { roll: [1, 5], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-          { roll: [6, 11], result: 'walk', text: 'Walk', sticker: 'BB' },
-          { roll: [12, 16], result: 'single', text: 'Single', sticker: 'H' },
-          { roll: [17, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-          { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-        ]
-      }
-    ]
-  }
-};
+import { getFirestore, doc, setDoc, onSnapshot, collection, updateDoc } from 'firebase/firestore';
 
 // Global variables provided by the environment
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -205,79 +13,167 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Player Card Component
-const PlayerCard = ({ player, isPitcher, stickers, effectiveHandedness, teamColor, inningsPitched, onSubstituteClick }) => {
-  if (!player) return null;
-
-  const cardBgColor = teamColor === 'red' ? 'bg-red-700' : 'bg-blue-700';
-  const cardBorderColor = teamColor === 'red' ? 'border-red-600' : 'border-blue-600';
-  const handednessDisplay = player.handedness === 'switch' ? 'Switch Hitter' : `${player.handedness}-handed`;
-  const displayedStats = isPitcher ? player.stats : player.handedness === 'switch' ? player.stats[effectiveHandedness] : player.stats;
+// Data Models
+const playerCardDeck = [
+  // Home Team (Red)
+  { 
+    id: 'h_p_1', 
+    name: 'Ace Chapman', 
+    type: 'batter',
+    handedness: 'right',
+    team: 'home',
+    stats: { ob: 10, pwr: 9 }, 
+    chart: [
+      { roll: [1, 4], result: 'out', text: 'Out (GB)', sticker: 'GB' },
+      { roll: [5, 7], result: 'walk', text: 'Walk', sticker: 'BB' },
+      { roll: [8, 14], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [15, 18], result: 'double', text: 'Double', sticker: 'XBH' },
+      { roll: [19, 20], result: 'strikeout', text: 'Strikeout', sticker: 'K' },
+    ]
+  },
+  { 
+    id: 'h_p_2', 
+    name: 'Ohhei Shotani', 
+    type: 'batter',
+    handedness: 'right',
+    team: 'home',
+    stats: { ob: 10, pwr: 9 }, 
+    chart: [
+      { roll: [1, 5], result: 'out', text: 'Out (GB)', sticker: 'GB' },
+      { roll: [6, 12], result: 'walk', text: 'Walk', sticker: 'BB' },
+      { roll: [13, 16], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [15, 15], result: 'double', text: 'Double', sticker: 'XBH' },
+      { roll: [16, 16], result: 'triple', text: 'Triple', sticker: 'XBH' },
+      { roll: [17, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
+    ]
+  },
+  { 
+    id: 'h_p_3',
+    name: 'Blake Burton', 
+    type: 'batter',
+    handedness: 'left',
+    team: 'home',
+    stats: { ob: 5, pwr: 10 }, 
+    chart: [
+      { roll: [1, 7], result: 'out', text: 'Out (GB)', sticker: 'GB' },
+      { roll: [8, 14], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [15, 17], result: 'double', text: 'Double', sticker: 'XBH' },
+      { roll: [18, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
+    ]
+  },
+  { 
+    id: 'h_p_4',
+    name: 'Zarry Bito',
+    type: 'pitcher',
+    handedness: 'left',
+    team: 'home',
+    stats: { control: 4, pos: 'SP', ip: 6 },
+    chart: [
+      { roll: [1, 3], result: 'out', text: 'Out (PU)', sticker: '' },
+      { roll: [4, 9], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
+      { roll: [10, 13], result: 'out', text: 'Out (GB)', sticker: '' },
+      { roll: [14, 17], result: 'out', text: 'Out (FB)', sticker: '' },
+      { roll: [18, 23], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [24, 30], result: 'homerun', text: 'Home Run', sticker: 'XBH' },
+    ]
+  },
+  { 
+    id: 'h_p_5', 
+    name: 'A-Rod', 
+    type: 'batter',
+    handedness: 'right',
+    team: 'home',
+    stats: { ob: 12, pwr: 8 }, 
+    chart: [
+      { roll: [1, 3], result: 'out', text: 'Out (PU)', sticker: 'PU' },
+      { roll: [4, 6], result: 'walk', text: 'Walk', sticker: 'BB' },
+      { roll: [7, 13], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [14, 17], result: 'double', text: 'Double', sticker: 'XBH' },
+      { roll: [18, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
+    ]
+  },
   
-  // Calculate effective control
-  let effectiveControl = displayedStats.control;
-  if (isPitcher && inningsPitched > player.stats.ip) {
-      effectiveControl = Math.max(1, effectiveControl - (inningsPitched - player.stats.ip));
-  }
-
-  return (
-    <div className={`${cardBgColor} p-4 rounded-xl shadow-lg border ${cardBorderColor} w-full relative`}>
-      <div className="text-center mb-2">
-        <h4 className="text-xl font-bold">{player.name}</h4>
-        <p className="text-sm text-gray-200 capitalize">{player.type}</p>
-        <p className="text-sm text-gray-200 capitalize">{handednessDisplay}</p>
-      </div>
-      <div className="flex justify-around text-center mb-4">
-        {isPitcher ? (
-          <div className="flex flex-col items-center">
-            <p className="text-2xl font-bold text-yellow-300">{effectiveControl}</p>
-            <p className="text-sm text-gray-200">Control</p>
-            <p className="text-xs text-gray-300">(IP: {inningsPitched}/{player.stats.ip})</p>
-            <button onClick={onSubstituteClick} className="mt-2 bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold py-1 px-3 rounded-full">
-              Substitute
-            </button>
-          </div>
-        ) : (
-          <>
-            <div>
-              <p className="text-2xl font-bold text-blue-300">{displayedStats.ob}</p>
-              <p className="text-sm text-gray-200">On-Base</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-red-300">{displayedStats.pwr}</p>
-              <p className="text-sm text-gray-200">Power</p>
-            </div>
-          </>
-        )}
-      </div>
-      <div className="space-y-1">
-        <h5 className="text-sm font-semibold mb-1">Chart</h5>
-        {player.chart.map((entry, index) => (
-          <div key={index} className="flex items-center justify-between bg-gray-600 p-2 rounded-lg">
-            <span className="text-xs font-mono">{entry.roll[0]}-{entry.roll[1]}</span>
-            <span className="text-sm font-medium">{entry.text}</span>
-            {entry.sticker && (
-              <span className="text-xs font-bold px-2 py-1 rounded-full bg-gray-800 text-gray-300">{entry.sticker}</span>
-            )}
-          </div>
-        ))}
-      </div>
-      {/* Display Stickers */}
-      {stickers && stickers.length > 0 && (
-        <div className="absolute top-2 right-2 flex flex-wrap gap-1">
-          {stickers.map((sticker, index) => (
-            <span key={index} className="bg-blue-500 text-white text-xs font-bold rounded-full px-2 py-1 shadow">
-              {sticker}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+  // Away Team (Blue)
+  { 
+    id: 'a_p_1', 
+    name: 'Mike Trout', 
+    type: 'batter',
+    handedness: 'right',
+    team: 'away',
+    stats: { ob: 15, pwr: 12 }, 
+    chart: [
+      { roll: [1, 5], result: 'out', text: 'Out (GB)', sticker: 'GB' },
+      { roll: [6, 12], result: 'walk', text: 'Walk', sticker: 'BB' },
+      { roll: [13, 16], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [17, 19], result: 'double', text: 'Double', sticker: 'XBH' },
+      { roll: [20, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
+    ]
+  },
+  { 
+    id: 'a_p_2', 
+    name: 'Jacob deGrom', 
+    type: 'pitcher',
+    handedness: 'right',
+    team: 'away',
+    stats: { control: 3, pos: 'SP', ip: 8 }, 
+    chart: [
+      { roll: [1, 2], result: 'out', text: 'Out (FB)', sticker: '' },
+      { roll: [3, 8], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
+      { roll: [9, 12], result: 'out', text: 'Out (GB)', sticker: '' },
+      { roll: [13, 15], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [16, 18], result: 'double', text: 'Double', sticker: 'XBH' },
+      { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'XBH' },
+    ]
+  },
+  { 
+    id: 'a_p_3', 
+    name: 'Ronald Acuna Jr.', 
+    type: 'batter',
+    handedness: 'right',
+    team: 'away',
+    stats: { ob: 14, pwr: 11 }, 
+    chart: [
+      { roll: [1, 4], result: 'out', text: 'Out (GB)', sticker: 'GB' },
+      { roll: [5, 8], result: 'walk', text: 'Walk', sticker: 'BB' },
+      { roll: [9, 15], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [16, 18], result: 'double', text: 'Double', sticker: 'XBH' },
+      { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
+    ]
+  },
+  { 
+    id: 'a_p_4', 
+    name: 'Fernando Tatis Jr.', 
+    type: 'batter',
+    handedness: 'right',
+    team: 'away',
+    stats: { ob: 13, pwr: 10 }, 
+    chart: [
+      { roll: [1, 4], result: 'out', text: 'Out (GB)', sticker: 'GB' },
+      { roll: [5, 7], result: 'walk', text: 'Walk', sticker: 'BB' },
+      { roll: [8, 14], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [15, 17], result: 'double', text: 'Double', sticker: 'XBH' },
+      { roll: [18, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
+    ]
+  },
+  { 
+    id: 'a_p_5', 
+    name: 'Trea Turner', 
+    type: 'batter',
+    handedness: 'right',
+    team: 'away',
+    stats: { ob: 12, pwr: 9 }, 
+    chart: [
+      { roll: [1, 4], result: 'out', text: 'Out (GB)', sticker: 'GB' },
+      { roll: [5, 7], result: 'walk', text: 'Walk', sticker: 'BB' },
+      { roll: [8, 15], result: 'single', text: 'Single', sticker: 'H' },
+      { roll: [16, 18], result: 'double', text: 'Double', sticker: 'XBH' },
+      { roll: [19, 20], result: 'triple', text: 'Triple', sticker: 'XBH' },
+    ]
+  },
+];
 
 // Main App Component
-const App = () => {
+export default function App() {
   const [user, setUser] = useState(null);
   const [game, setGame] = useState(null);
   const [gameId, setGameId] = useState('');
@@ -285,23 +181,24 @@ const App = () => {
   const [message, setMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-  const [diceRollValue, setDiceRollValue] = useState(null);
-  const [isRolling, setIsRolling] = useState(false);
-  const [showSubModal, setShowSubModal] = useState(false);
-  const [availablePitchers, setAvailablePitchers] = useState([]);
 
   // Firestore path constants
   const gamesCollectionPath = `/artifacts/${appId}/public/data/games`;
 
   const baseCoordinates = [
-    { x: 250, y: 150 },  // First Base
-    { x: 150, y: 25 },   // Second Base
-    { x: 50, y: 150 },  // Third Base
+    { x: 200, y: 120 },  // First Base
+    { x: 120, y: 20 },   // Second Base
+    { x: 40, y: 120 },  // Third Base
   ];
   const batterBoxCoordinates = {
-    right: { x: 100, y: 250 },
-    left: { x: 200, y: 250 }
+    right: { x: 80, y: 200 },
+    left: { x: 160, y: 200 }
   };
+  
+  const teamColors = {
+      home: 'red',
+      away: 'blue'
+  }
 
   // Auth Effect: Sign in and set up listener
   useEffect(() => {
@@ -363,45 +260,32 @@ const App = () => {
     try {
       const newGameDocRef = doc(collection(db, gamesCollectionPath));
       
-      const allPlayers = [
-        ...teams.home.batters, ...teams.home.pitchers, 
-        ...teams.away.batters, ...teams.away.pitchers
-      ];
-      const initialStickers = {};
-      allPlayers.forEach(card => initialStickers[card.id] = []);
-      
-      const initialInningScores = { home: {}, away: {} };
-      for (let i = 1; i <= 9; i++) {
-        initialInningScores.home[i.toString()] = 0;
-        initialInningScores.away[i.toString()] = 0;
-      }
+      const homeTeamPitcher = { ...playerCardDeck.find(card => card.team === 'home' && card.type === 'pitcher'), stickers: [] };
+      const homeTeamBatters = playerCardDeck.filter(card => card.team === 'home' && card.type === 'batter').map(card => ({...card, stickers: []}));
+      const awayTeamPitcher = { ...playerCardDeck.find(card => card.team === 'away' && card.type === 'pitcher'), stickers: [] };
+      const awayTeamBatters = playerCardDeck.filter(card => card.team === 'away' && card.type === 'batter').map(card => ({...card, stickers: []}));
       
       await setDoc(newGameDocRef, {
         player1Id: user.uid,
         player2Id: user.uid,
         isSoloGame: true,
-        turn: user.uid,
         inning: 1,
-        inningHalf: 'top',
         outs: 0,
-        homeScore: 0,
-        awayScore: 0,
-        bases: [false, false, false],
-        gameLog: [`Solo game started. It's the top of the 1st inning. Away Team is batting.`],
-        homeBattingLineup: teams.home.batters,
-        awayBattingLineup: teams.away.batters,
-        homePitcher: teams.home.pitchers[0],
-        awayPitcher: teams.away.pitchers[0],
-        pitcherIP: {
-          home: 0,
-          away: 0,
-        },
-        currentBatterIndexHome: 0,
-        currentBatterIndexAway: 0,
-        stickers: initialStickers,
+        score: { home: 0, away: 0 },
+        bases: { home: [false, false, false], away: [false, false, false] },
+        gameLog: [`Solo game started. The Away team is batting first.`],
+        homeTeamBatters: homeTeamBatters,
+        awayTeamBatters: awayTeamBatters,
+        homeTeamPitcher: homeTeamPitcher,
+        awayTeamPitcher: awayTeamPitcher,
+        currentBatterIndex: 0,
+        battingTeam: 'away',
         status: 'started',
         atBatPhase: 'firstRoll',
-        inningScores: initialInningScores
+        lastRoll1: null,
+        lastRoll2: null,
+        lastAdvantage: null,
+        lastResult: null,
       });
 
       setGameId(newGameDocRef.id);
@@ -412,166 +296,135 @@ const App = () => {
       setLoading(false);
     }
   };
-
-  const rollDice = (callback) => {
-    setIsRolling(true);
-    let counter = 0;
-    const interval = setInterval(() => {
-      setDiceRollValue(Math.floor(Math.random() * 20) + 1);
-      counter++;
-      if (counter > 10) { // Roll for about 1 second
-        clearInterval(interval);
-        const finalRoll = Math.floor(Math.random() * 20) + 1;
-        setDiceRollValue(finalRoll);
-        setIsRolling(false);
-        callback(finalRoll);
-      }
-    }, 100);
-  };
-
+  
   const rollForAdvantage = async () => {
-    if (!user || !game || isRolling) return;
+    if (!user || !game) return;
     
-    rollDice(async (roll1) => {
-      const isSoloTurn = game.isSoloGame;
-      if (!isSoloTurn) {
-          showInfoModal("This game is for solo play only. Please create a new solo game.");
-          return;
-      }
-      
-      const currentBatter = game.inningHalf === 'top' ? game.awayBattingLineup[game.currentBatterIndexAway] : game.homeBattingLineup[game.currentBatterIndexHome];
-      const currentPitcher = game.inningHalf === 'top' ? game.homePitcher : game.awayPitcher;
-      
-      if (!currentBatter || !currentPitcher) {
-        showInfoModal("Please select a pitcher and batter to continue.");
+    const isSoloTurn = game.isSoloGame;
+
+    if (!isSoloTurn) {
+        showInfoModal("This game is for solo play only. Please create a new solo game.");
         return;
-      }
-  
-      let batterOB = currentBatter.stats.ob;
-      let effectiveHandedness = currentBatter.handedness;
-      if (currentBatter.handedness === 'switch') {
-          effectiveHandedness = currentPitcher.handedness === 'left' ? 'right' : 'left';
-          batterOB = currentBatter.stats[effectiveHandedness].ob;
-      }
-      
-      // Implement pitcher fatigue logic
-      let effectiveControl = currentPitcher.stats.control;
-      const pitcherIP = game.inningHalf === 'top' ? game.pitcherIP.home : game.pitcherIP.away;
-      if (pitcherIP > currentPitcher.stats.ip) {
-        effectiveControl = Math.max(1, effectiveControl - (pitcherIP - currentPitcher.stats.ip));
-      }
-      
-      const pitcherAdvantageScore = roll1 + effectiveControl;
-      const isPitcherAdvantage = pitcherAdvantageScore > batterOB;
-      const currentAdvantage = isPitcherAdvantage ? 'pitcher' : 'batter';
-  
-      const logMessage = `${currentPitcher.name} pitches to ${currentBatter.name}. You roll a ${roll1}. Pitcher's score: ${pitcherAdvantageScore}, Batter's On-Base: ${batterOB}. It is a ${currentAdvantage}'s advantage!`;
-  
-      await updateDoc(doc(db, gamesCollectionPath, gameId), {
-        atBatPhase: 'secondRoll',
-        currentAdvantage: currentAdvantage,
-        gameLog: [...game.gameLog, logMessage],
-        effectiveHandedness: effectiveHandedness,
-        roll1: roll1,
-        roll2: null, 
-        atBatResultText: null, 
-        pitcherAdvantageScore: pitcherAdvantageScore,
-        batterOB: batterOB
-      });
+    }
+    
+    const battingTeam = game.battingTeam;
+    const currentBatter = battingTeam === 'home' 
+      ? game.homeTeamBatters[game.currentBatterIndex]
+      : game.awayTeamBatters[game.currentBatterIndex];
+    const currentPitcher = battingTeam === 'home' ? game.awayTeamPitcher : game.homeTeamPitcher;
+
+    if (!currentBatter || !currentPitcher) {
+      showInfoModal("Please select a pitcher and batter to continue.");
+      return;
+    }
+    
+    const roll1 = Math.floor(Math.random() * 20) + 1;
+    const pitcherAdvantageScore = roll1 + currentPitcher.stats.control;
+    const isPitcherAdvantage = pitcherAdvantageScore > currentBatter.stats.ob;
+    const currentAdvantage = isPitcherAdvantage ? 'pitcher' : 'batter';
+
+    const logMessage = `${currentPitcher.name} pitches to ${currentBatter.name}. You roll a ${roll1}. Pitcher's score: ${pitcherAdvantageScore}, Batter's On-Base: ${currentBatter.stats.ob}. It is a ${currentAdvantage}'s advantage!`;
+
+    await updateDoc(doc(db, gamesCollectionPath, gameId), {
+      atBatPhase: 'secondRoll',
+      currentAdvantage: currentAdvantage,
+      gameLog: [...game.gameLog, logMessage],
+      lastRoll1: roll1,
+      lastAdvantage: currentAdvantage,
+      lastResult: null,
     });
   };
 
   const rollForAtBatResult = async () => {
-    if (!user || !game || isRolling) return;
+    if (!user || !game) return;
 
-    rollDice(async (roll2) => {
-      const isSoloTurn = game.isSoloGame;
-      
-      if (!isSoloTurn) {
-        showInfoModal("This game is for solo play only. Please create a new solo game.");
-        return;
-      }
-      
-      const currentBatter = game.inningHalf === 'top' ? game.awayBattingLineup[game.currentBatterIndexAway] : game.homeBattingLineup[game.currentBatterIndexHome];
-      const currentPitcher = game.inningHalf === 'top' ? game.homePitcher : game.awayPitcher;
-      const cardToUse = game.currentAdvantage === 'pitcher' ? currentPitcher : currentBatter;
-  
-      const result = getAtBatResult(roll2, cardToUse);
-      let logMessage = `${currentBatter.name} rolls a ${roll2}. Result: ${result.text}`;
-      
-      const newOuts = game.outs + (result.type === 'out' || result.type === 'strikeout' ? 1 : 0);
-      const { bases: newBases, score: runScore } = updateBases(game.bases, result);
-      
-      const newInningScores = { ...game.inningScores };
-      if (game.inningHalf === 'top') {
-        newInningScores.away[game.inning] += runScore;
+    const isSoloTurn = game.isSoloGame;
+    
+    if (!isSoloTurn) {
+      showInfoModal("This game is for solo play only. Please create a new solo game.");
+      return;
+    }
+    
+    const battingTeam = game.battingTeam;
+    const fieldingTeam = battingTeam === 'home' ? 'away' : 'home';
+    let currentBatter = battingTeam === 'home' 
+      ? game.homeTeamBatters[game.currentBatterIndex]
+      : game.awayTeamBatters[game.currentBatterIndex];
+    let currentPitcher = battingTeam === 'home' ? game.awayTeamPitcher : game.homeTeamPitcher;
+
+    const cardToUse = game.currentAdvantage === 'pitcher' ? currentPitcher : currentBatter;
+
+    const maxRoll = cardToUse.chart.length > 0 ? cardToUse.chart[cardToUse.chart.length - 1].roll[1] : 20;
+    const roll2 = Math.floor(Math.random() * maxRoll) + 1;
+    const result = getAtBatResult(roll2, cardToUse);
+    let logMessage = `${currentBatter.name} rolls a ${roll2}. Result: ${result.text}`;
+    
+    let newOuts = game.outs;
+    let newScore = { ...game.score };
+    let newBases = { ...game.bases };
+    let newBatterIndex = game.currentBatterIndex;
+    let nextBattingTeam = battingTeam;
+    let nextInning = game.inning;
+
+    if (result.type === 'out' || result.type === 'strikeout') {
+        newOuts++;
+    } else {
+        const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], result);
+        newBases[battingTeam] = updatedBases;
+        newScore[battingTeam] += runs;
+    }
+    
+    const updatedTeamBatters = battingTeam === 'home' ? [...game.homeTeamBatters] : [...game.awayTeamBatters];
+    const updatedTeamPitcher = fieldingTeam === 'home' ? { ...game.homeTeamPitcher } : { ...game.awayTeamPitcher };
+    
+    // Add sticker logic
+    if (result.sticker) {
+      if (game.currentAdvantage === 'batter') {
+        currentBatter = { ...currentBatter, stickers: [...currentBatter.stickers, result.sticker] };
+        updatedTeamBatters[game.currentBatterIndex] = currentBatter;
       } else {
-        newInningScores.home[game.inning] += runScore;
-      }
-  
-      // Handle stickers
-      const updatedStickers = { ...game.stickers };
-      const offensiveResults = ['single', 'double', 'triple', 'homerun', 'walk'];
-      const defensiveResults = ['out', 'strikeout'];
-      
-      if (result.sticker) {
-        let stickerPlayerId = null;
-        if (offensiveResults.includes(result.type)) {
-          stickerPlayerId = currentBatter.id;
-        } else if (defensiveResults.includes(result.type)) {
-          stickerPlayerId = currentPitcher.id;
-        }
-      
-        if (stickerPlayerId) {
-          if (!updatedStickers[stickerPlayerId]) {
-            updatedStickers[stickerPlayerId] = [];
-          }
-          updatedStickers[stickerPlayerId].push(result.sticker);
-        }
-      }
-  
-      const nextBatterIndexHome = (game.currentBatterIndexHome + 1) % game.homeBattingLineup.length;
-      const nextBatterIndexAway = (game.currentBatterIndexAway + 1) % game.awayBattingLineup.length;
-      
-      const updatedGame = { 
-          ...game, 
-          bases: newBases, 
-          outs: newOuts, 
-          homeScore: Object.values(newInningScores.home).reduce((sum, current) => sum + current, 0),
-          awayScore: Object.values(newInningScores.away).reduce((sum, current) => sum + current, 0),
-          currentBatterIndexHome: game.inningHalf === 'bottom' && newOuts < 3 ? nextBatterIndexHome : game.currentBatterIndexHome,
-          currentBatterIndexAway: game.inningHalf === 'top' && newOuts < 3 ? nextBatterIndexAway : game.currentBatterIndexAway,
-          stickers: updatedStickers,
-          inningScores: newInningScores
-      };
-  
-      if (newOuts >= 3) {
-        logMessage += ` The inning has ended with 3 outs.`;
-        
-        const newPitcherIP = { ...game.pitcherIP };
-        if (game.inningHalf === 'top') {
-          updatedGame.inningHalf = 'bottom';
-          newPitcherIP.home += 1; // Increment IP for the home pitcher
-          logMessage += ` It's now the bottom of the ${game.inning} inning.`;
+        currentPitcher = { ...currentPitcher, stickers: [...currentPitcher.stickers, result.sticker] };
+        if (fieldingTeam === 'home') {
+            updatedTeamPitcher.stickers = currentPitcher.stickers;
         } else {
-          updatedGame.inningHalf = 'top';
-          updatedGame.inning = updatedGame.inning + 1;
-          newPitcherIP.away += 1; // Increment IP for the away pitcher
-          logMessage += ` It's now the top of the ${updatedGame.inning} inning.`;
+            updatedTeamPitcher.stickers = currentPitcher.stickers;
         }
-        updatedGame.outs = 0;
-        updatedGame.bases = [false, false, false];
-        updatedGame.pitcherIP = newPitcherIP;
       }
-      
-      await updateDoc(doc(db, gamesCollectionPath, gameId), {
-        ...updatedGame,
-        gameLog: [...game.gameLog, logMessage],
+    }
+    
+    if (newOuts >= 3) {
+      logMessage += ` Inning over! The ${battingTeam} team is done batting.`;
+      newOuts = 0;
+      newBases[battingTeam] = [false, false, false];
+      newBatterIndex = 0;
+      nextBattingTeam = fieldingTeam;
+      nextInning = game.inning % 1 === 0 ? game.inning + 0.5 : game.inning + 0.5;
+    } else {
+        newBatterIndex++;
+    }
+
+    const updateData = { 
+        outs: newOuts, 
+        score: newScore,
+        bases: newBases,
+        battingTeam: nextBattingTeam,
+        inning: nextInning,
+        currentBatterIndex: newBatterIndex,
         atBatPhase: 'firstRoll',
-        roll2: roll2,
-        atBatResultText: result.text
-      });
-    });
+        lastRoll2: roll2,
+        lastResult: result.text,
+        gameLog: [...game.gameLog, logMessage]
+    };
+
+    if (battingTeam === 'home') {
+        updateData.homeTeamBatters = updatedTeamBatters;
+        updateData.awayTeamPitcher = updatedTeamPitcher;
+    } else {
+        updateData.awayTeamBatters = updatedTeamBatters;
+        updateData.homeTeamPitcher = updatedTeamPitcher;
+    }
+    
+    await updateDoc(doc(db, gamesCollectionPath, gameId), updateData);
   };
   
   const getAtBatResult = (roll, card) => {
@@ -582,74 +435,54 @@ const App = () => {
     }
     return { type: 'out', text: 'Out', sticker: 'GB' };
   };
-
+  
   const updateBases = (currentBases, result) => {
+    let newBases = [...currentBases];
     let score = 0;
-    let bases = [...currentBases];
-  
+    
     if (result.type === 'walk') {
-      if (bases[0] && bases[1] && bases[2]) {
-        score++; // Bases loaded, force home a run
-      }
-      if (bases[1] && bases[0]) {
-        bases[2] = true; // Runner on 2nd moves to 3rd
-      }
-      if (bases[0]) {
-        bases[1] = true; // Runner on 1st moves to 2nd
-      }
-      bases[0] = true; // Batter goes to first
+        if (newBases[0] && newBases[1] && newBases[2]) {
+            score++;
+        }
+        if (newBases[1] && newBases[0]) {
+            newBases[2] = true;
+        }
+        if (newBases[0]) {
+            newBases[1] = true;
+        }
+        newBases[0] = true;
     } else if (result.type === 'single') {
-      const runnersWhoScore = bases.filter((onBase, index) => onBase && index === 2).length;
-      score += runnersWhoScore;
-  
-      const newBases = [true, false, false]; // Batter is on first
-  
-      if (bases[0]) {
-        newBases[1] = true; // Runner on first goes to second
-      }
-      if (bases[1]) {
-        newBases[2] = true; // Runner on second goes to third
-      }
-      bases = newBases;
+        const nextBases = [false, false, false];
+        if (newBases[2]) {
+            score++;
+        }
+        if (newBases[1]) {
+            nextBases[2] = true;
+        }
+        if (newBases[0]) {
+            nextBases[1] = true;
+        }
+        nextBases[0] = true;
+        return { bases: nextBases, score };
     } else if (result.type === 'double') {
-      score += bases[2] ? 1 : 0;
-      score += bases[1] ? 1 : 0;
-      if (bases[0]) { bases[2] = true; }
-      bases[1] = true;
-      bases[0] = false;
+      if (newBases[2]) { score++; }
+      if (newBases[1]) { score++; }
+      if (newBases[0]) { newBases[2] = true; }
+      newBases[1] = true;
     } else if (result.type === 'triple') {
-      score += bases[2] ? 1 : 0;
-      score += bases[1] ? 1 : 0;
-      score += bases[0] ? 1 : 0;
-      bases[2] = true;
-      bases[1] = false;
-      bases[0] = false;
+        // Correct logic for triple: clear all bases and move runners home
+        if (newBases[0]) { score++; }
+        if (newBases[1]) { score++; }
+        if (newBases[2]) { score++; }
+        newBases = [false, false, false];
+        newBases[2] = true;
     } else if (result.type === 'homerun') {
-      score++;
-      score += bases[0] ? 1 : 0;
-      score += bases[1] ? 1 : 0;
-      score += bases[2] ? 1 : 0;
-      bases = [false, false, false];
+        score += (newBases[0] ? 1 : 0) + (newBases[1] ? 1 : 0) + (newBases[2] ? 1 : 0);
+        newBases = [false, false, false];
+        score++;
     }
-  
-    return { bases, score };
-  };
-
-  const handleSubstitutePitcher = (newPitcher) => {
-    const isHomePitcher = game.inningHalf === 'top';
-    const newPitcherIP = { ...game.pitcherIP };
-    newPitcherIP[isHomePitcher ? 'home' : 'away'] = 0;
     
-    const newGameData = {
-      ...game,
-      homePitcher: isHomePitcher ? newPitcher : game.homePitcher,
-      awayPitcher: isHomePitcher ? game.awayPitcher : newPitcher,
-      pitcherIP: newPitcherIP,
-      gameLog: [...game.gameLog, `${isHomePitcher ? teams.home.name : teams.away.name} substitutes their pitcher. ${newPitcher.name} is now pitching.`]
-    };
-    
-    updateDoc(doc(db, gamesCollectionPath, gameId), newGameData);
-    setShowSubModal(false);
+    return { bases: newBases, score };
   };
 
   if (loading) {
@@ -657,23 +490,13 @@ const App = () => {
       <div className="text-xl font-medium">Loading...</div>
     </div>;
   }
-
-  const currentBatter = game?.inningHalf === 'top' ? game?.awayBattingLineup?.[game?.currentBatterIndexAway] : game?.homeBattingLineup?.[game?.currentBatterIndexHome];
-  const currentPitcher = game?.inningHalf === 'top' ? game?.homePitcher : game?.awayPitcher;
-  const currentBatterStickers = currentBatter && game?.stickers?.[currentBatter.id];
-  const currentPitcherStickers = currentPitcher && game?.stickers?.[currentPitcher.id];
-  const currentEffectiveHandedness = game?.effectiveHandedness || (currentBatter ? currentBatter.handedness : null);
-  const isGameOver = game?.status === 'gameOver';
-  const inningOver = game?.outs >= 3;
   
-  const getTeamColor = (isHomeTeam) => isHomeTeam ? teams.home.color : teams.away.color;
-  const battingTeamColor = getTeamColor(game?.inningHalf === 'bottom');
-  const fieldingTeamColor = getTeamColor(game?.inningHalf === 'top');
-  const battingTeamBaseColor = battingTeamColor === 'red' ? '#dc2626' : '#3b82f6';
-  const currentPitcherIP = game?.inningHalf === 'top' ? game?.pitcherIP.home : game?.pitcherIP.away;
-  const fieldingTeamPitchers = fieldingTeamColor === 'red' ? teams.home.pitchers : teams.away.pitchers;
-  const pitchingTeamName = fieldingTeamColor === 'red' ? teams.home.name : teams.away.name;
-  const pitchingTeamId = fieldingTeamColor === 'red' ? 'home' : 'away';
+  const currentBatters = game?.battingTeam === 'home' ? game?.homeTeamBatters : game?.awayTeamBatters;
+  const currentBatter = currentBatters?.[game?.currentBatterIndex];
+  const currentPitcher = game?.battingTeam === 'home' ? game?.awayTeamPitcher : game?.homeTeamPitcher;
+  const battingTeamColor = teamColors[game?.battingTeam];
+  const fieldingTeamColor = game?.battingTeam === 'home' ? 'blue' : 'red';
+  const isTopInning = game?.battingTeam === 'away';
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 font-inter p-4 flex flex-col items-center">
@@ -686,36 +509,6 @@ const App = () => {
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
             >
               Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showSubModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 max-w-md w-full">
-            <h3 className="text-2xl font-bold mb-4">Choose a New Pitcher</h3>
-            <div className="space-y-4">
-              {fieldingTeamPitchers.filter(p => p.id !== currentPitcher.id).map(pitcher => (
-                <div key={pitcher.id} className="flex justify-between items-center bg-gray-700 p-4 rounded-lg">
-                  <div>
-                    <p className="text-lg font-bold">{pitcher.name}</p>
-                    <p className="text-sm text-gray-400">Control: {pitcher.stats.control}, IP: {pitcher.stats.ip}</p>
-                  </div>
-                  <button
-                    onClick={() => handleSubstitutePitcher(pitcher)}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-                  >
-                    Select
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => setShowSubModal(false)}
-              className="mt-6 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-            >
-              Cancel
             </button>
           </div>
         </div>
@@ -738,63 +531,60 @@ const App = () => {
 
       {gameId && game && (
         <div className="w-full max-w-4xl space-y-8">
-          
-          {/* Main game board container with scoreboard and at-bat section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-            
-            {/* Left Column: Game State */}
-            <div className="flex flex-col items-center justify-center text-center p-4">
-              <h2 className="text-2xl font-bold">Inning: {game.inningHalf === 'top' ? 'Top' : 'Bottom'} of {game.inning}</h2>
-              <p className="text-sm text-gray-400">Outs: {game.outs}</p>
-              {/* Scoreboard Grid */}
-              <div className="text-center font-bold text-sm bg-gray-700 p-2 rounded-lg overflow-x-auto w-full max-w-md mt-4">
-                  <div className="inline-grid grid-flow-col gap-x-2 w-full text-left">
-                      <span className="font-semibold px-2 min-w-[3rem]">Team</span>
-                      {Object.keys(game.inningScores.away).map(inning => (
-                          <span key={`inning-header-${inning}`} className="font-semibold text-center px-2">{inning}</span>
-                      ))}
-                      <span className="font-semibold text-center px-2">T</span>
+          <div className="flex flex-col sm:flex-row sm:space-x-8">
+            {/* Left Column: Diamond & Game State */}
+            <div className="flex-1 flex flex-col items-center sm:items-start bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
+              
+              {/* Score Bug */}
+              <div className="flex flex-col items-start bg-gray-900 p-4 rounded-xl shadow-lg border border-gray-700 w-full sm:w-auto">
+                <div className="flex justify-between w-full">
+                  <div className="text-sm font-bold uppercase text-gray-400">AWAY</div>
+                  <div className="text-lg font-bold text-gray-100">{game.score.away}</div>
+                </div>
+                <div className="flex justify-between w-full">
+                  <div className="text-sm font-bold uppercase text-gray-400">HOME</div>
+                  <div className="text-lg font-bold text-gray-100">{game.score.home}</div>
+                </div>
+                <div className="w-full h-[1px] bg-gray-700 my-2"></div>
+                <div className="flex items-center justify-center space-x-8 w-full">
+                  <div className="flex items-center space-x-1">
+                    <span className={`text-sm font-bold ${isTopInning ? 'text-blue-400' : 'text-red-400'}`}>
+                      {isTopInning ? 'Top' : 'Bottom'}
+                    </span>
+                    <span className="text-sm font-bold text-gray-400">{Math.floor(game.inning)}</span>
                   </div>
-                  <div className="inline-grid grid-flow-col gap-x-2 w-full text-left mt-1">
-                      <span className="font-semibold px-2 min-w-[3rem] text-xs">Away</span>
-                      {Object.keys(game.inningScores.away).map(inning => (
-                          <span key={`away-score-${inning}`} className="text-center px-2">{game.inningScores.away[inning]}</span>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-sm font-bold text-gray-400">Outs</span>
+                    <div className="flex space-x-1 ml-1">
+                      {[...Array(2)].map((_, i) => (
+                        <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < game.outs ? 'bg-red-500' : 'bg-gray-600'}`}></div>
                       ))}
-                      <span className="text-center px-2">{game.awayScore}</span>
+                    </div>
                   </div>
-                  <div className="inline-grid grid-flow-col gap-x-2 w-full text-left mt-1">
-                      <span className="font-semibold px-2 min-w-[3rem] text-xs">Home</span>
-                      {Object.keys(game.inningScores.home).map(inning => (
-                          <span key={`home-score-${inning}`} className="text-center px-2">{game.inningScores.home[inning]}</span>
-                      ))}
-                      <span className="text-center px-2">{game.homeScore}</span>
-                  </div>
+                </div>
               </div>
-            </div>
-
-            {/* Middle Column: Baserunning */}
-            <div className="flex flex-col items-center justify-center p-4">
-              <h3 className="text-lg font-bold mb-2">Baserunning</h3>
-              <div className="flex justify-center my-4">
-                <svg width="325" height="325" viewBox="0 0 325 325" xmlns="http://www.w3.org/2000/svg" className="text-gray-600">
+              
+              {/* Bases display with SVG */}
+              <div className="flex justify-center mt-2">
+                <svg width="260" height="260" viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg" className="text-gray-600">
                   {/* Infield */}
-                  <polygon points="150,275 275,150 150,25 25,150" fill="#2D4636" />
+                  <polygon points="120,220 220,120 120,20 20,120" fill="#2D4636" />
                   
                   {/* Bases */}
-                  <polygon points="150,275 175,250 175,225 125,225 125,250" fill={!game.bases[0] && !game.bases[1] && !game.bases[2] ? '#FFFFFF' : '#D1D5DB'} stroke="#D1D5DB" strokeWidth="5" />
-                  <polygon points="275,150 250,175 225,150 250,125" fill={game.bases[0] ? '#FFFFFF' : '#D1D5DB'} stroke="#D1D5DB" strokeWidth="5" />
-                  <polygon points="150,25 175,50 150,75 125,50" fill={game.bases[1] ? '#FFFFFF' : '#D1D5DB'} stroke="#D1D5DB" strokeWidth="5" />
-                  <polygon points="25,150 50,125 75,150 50,175" fill={game.bases[2] ? '#FFFFFF' : '#D1D5DB'} stroke="#D1D5DB" strokeWidth="5" />
+                  <polygon points="120,220 140,200 140,180 100,180 100,200" fill="#D1D5DB" stroke="#D1D5DB" strokeWidth="1" />
+                  <polygon points="220,120 200,140 180,120 200,100" fill="#D1D5DB" stroke="#D1D5DB" strokeWidth="1" />
+                  <polygon points="120,20 140,40 120,60 100,40" fill="#D1D5DB" stroke="#D1D5DB" strokeWidth="1" />
+                  <polygon points="20,120 40,100 60,120 40,140" fill="#D1D5DB" stroke="#D1D5DB" strokeWidth="1" />
                   
                   {/* Runners */}
-                  {game.bases && game.bases.map((onBase, index) => 
+                  {game.bases?.[game.battingTeam] && game.bases[game.battingTeam].map((onBase, index) => 
                     onBase ? (
                       <circle 
                         key={index}
                         cx={baseCoordinates[index].x} 
                         cy={baseCoordinates[index].y} 
-                        r="15" 
-                        fill={battingTeamBaseColor}
+                        r="12" 
+                        fill={game.battingTeam === 'home' ? '#FF2305' : '#2344FF'} 
                       />
                     ) : null
                   )}
@@ -802,115 +592,138 @@ const App = () => {
                   {/* Batter */}
                   {currentBatter && (
                     <circle 
-                      cx={currentEffectiveHandedness === 'right' ? batterBoxCoordinates.right.x : batterBoxCoordinates.left.x} 
+                      cx={currentBatter.handedness === 'right' ? batterBoxCoordinates.right.x : batterBoxCoordinates.left.x} 
                       cy={batterBoxCoordinates.right.y} 
-                      r="15" 
-                      fill={battingTeamBaseColor} 
+                      r="12" 
+                      fill={game.battingTeam === 'home' ? '#FF2305' : '#2344FF'} 
                     />
                   )}
                 </svg>
               </div>
+              <div className="text-center font-bold text-xl mt-4">
+                <span className="text-blue-400">Game ID: {gameId}</span>
+              </div>
             </div>
 
-            {/* Right Column: At-Bat and Controls */}
-            <div className="flex flex-col items-center justify-center text-center p-4">
-              <h3 className="text-lg font-bold mb-2">Current At-Bat</h3>
-              <div className="w-full text-center my-2">
-                <div className="text-4xl font-bold text-yellow-300">
-                  {isRolling ? diceRollValue : game?.roll1 || game?.roll2 || '--'}
+            {/* Right Column: Current At-Bat & Action Buttons */}
+            <div className="flex-1 bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 text-center mt-8 sm:mt-0">
+              <h3 className="text-lg font-bold mb-4">Current At-Bat</h3>
+              <div className="flex justify-center items-center gap-8 mb-4">
+                <div>
+                  <p className="text-sm text-gray-400">Pitcher</p>
+                  <h4 className="font-bold text-xl">{currentPitcher?.name || 'Waiting...'}</h4>
                 </div>
-                <p className="text-sm text-gray-400">
-                  {game?.roll1 && game.atBatPhase === 'secondRoll' && !game?.roll2 ? 'Advantage Roll' :
-                   game?.roll2 ? 'Result Roll' : 'Roll Value'}
-                </p>
-              </div>
-              <div className="w-full text-center h-8">
-                {game.currentAdvantage && (
-                  <p className="text-sm mt-1">Advantage to: <span className={`font-bold capitalize ${game.currentAdvantage === 'pitcher' ? 'text-green-400' : 'text-red-400'}`}>{game.currentAdvantage}</span></p>
-                )}
-                {game.atBatResultText && (
-                  <p className="text-sm mt-1">Outcome: <span className="font-bold">{game.atBatResultText}</span></p>
-                )}
+                <div>
+                  <p className="text-sm text-gray-400">Batter</p>
+                  <h4 className="font-bold text-xl">{currentBatter?.name || 'Waiting...'}</h4>
+                </div>
               </div>
               
-              <div className="mt-4 h-[75px]">
-                {game.atBatPhase === 'firstRoll' && !inningOver && (
-                  <button
-                    onClick={rollForAdvantage}
-                    disabled={!currentPitcher || !currentBatter || isRolling}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Roll for Advantage
-                  </button>
+              {/* Dynamic At-Bat Display */}
+              <div className="mb-4">
+                {game.lastRoll1 && (
+                  <p className="text-lg font-medium">
+                    Roll 1: <span className="text-yellow-400 font-bold">{game.lastRoll1}</span> ({game.lastAdvantage}'s Advantage)
+                  </p>
                 )}
-    
-                {game.atBatPhase === 'secondRoll' && !inningOver && (
-                  <button
-                    onClick={rollForAtBatResult}
-                    disabled={!currentPitcher || !currentBatter || isRolling}
-                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Roll for Result
-                  </button>
+                {game.lastRoll2 && (
+                  <p className="text-lg font-medium">
+                    Roll 2: <span className="text-yellow-400 font-bold">{game.lastRoll2}</span> ({game.lastResult})
+                  </p>
+                )}
+              </div>
+
+              {game.atBatPhase === 'firstRoll' && (
+                <button
+                  onClick={rollForAdvantage}
+                  disabled={!currentPitcher || !currentBatter}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Roll for Advantage
+                </button>
+              )}
+
+              {game.atBatPhase === 'secondRoll' && (
+                <button
+                  onClick={rollForAtBatResult}
+                  disabled={!currentPitcher || !currentBatter}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Roll for Result
+                </button>
+              )}
+              
+              {/* Player Cards */}
+              <div className="mt-8 space-y-6">
+                {/* Pitcher Card */}
+                {currentPitcher && (
+                  <div className={`p-4 rounded-xl shadow-inner border-2 ${currentPitcher.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} text-left`}>
+                    <h4 className="text-xl font-bold mb-2">{currentPitcher.name} (P)</h4>
+                    <div className="flex justify-between items-center text-sm mb-2">
+                      <span className="font-semibold text-gray-400">Control:</span>
+                      <span className="font-bold text-yellow-300">{currentPitcher.stats.control}</span>
+                    </div>
+                    <div className="border-t border-gray-700 my-2"></div>
+                    <ul className="text-xs space-y-1">
+                      {currentPitcher.chart.map((item, index) => (
+                        <li key={index} className="flex justify-between">
+                          <span className="text-gray-400">Roll {item.roll[0]}-{item.roll[1]}:</span>
+                          <span className="font-semibold text-gray-200">{item.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {currentPitcher.stickers && currentPitcher.stickers.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {currentPitcher.stickers.map((sticker, index) => (
+                          <span key={index} className="px-2 py-1 bg-gray-500 rounded-full text-white text-xs font-bold">{sticker}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
                 
-                {inningOver && (
-                  <button
-                    onClick={() => {
-                      let newInningHalf = game.inningHalf === 'top' ? 'bottom' : 'top';
-                      let newInning = game.inningHalf === 'top' ? game.inning : game.inning + 1;
-                      let logMessage = game.inningHalf === 'top' ? `--- Inning change. It's now the bottom of the ${game.inning} inning. ---` : `--- New inning. It's now the top of the ${newInning} inning. ---`;
-                      
-                      updateDoc(doc(db, gamesCollectionPath, gameId), {
-                        outs: 0,
-                        bases: [false, false, false],
-                        inningHalf: newInningHalf,
-                        inning: newInning,
-                        gameLog: [...game.gameLog, logMessage],
-                      });
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition-colors"
-                  >
-                    {game.inningHalf === 'top' ? 'Start Bottom of Inning' : `Start Top of Inning ${game.inning + 1}`}
-                  </button>
-                )}
-
-                {isGameOver && (
-                  <div className="text-2xl font-bold text-center">Game Over!</div>
+                {/* Batter Card */}
+                {currentBatter && (
+                  <div className={`p-4 rounded-xl shadow-inner border-2 ${currentBatter.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} text-left`}>
+                    <h4 className="text-xl font-bold mb-2">{currentBatter.name} (B)</h4>
+                    <div className="flex justify-between items-center text-sm mb-2">
+                      <span className="font-semibold text-gray-400">On-Base:</span>
+                      <span className="font-bold text-green-400">{currentBatter.stats.ob}</span>
+                      <span className="font-semibold text-gray-400">Power:</span>
+                      <span className="font-bold text-red-400">{currentBatter.stats.pwr}</span>
+                    </div>
+                    <div className="border-t border-gray-700 my-2"></div>
+                    <ul className="text-xs space-y-1">
+                      {currentBatter.chart.map((item, index) => (
+                        <li key={index} className="flex justify-between">
+                          <span className="text-gray-400">Roll {item.roll[0]}-{item.roll[1]}:</span>
+                          <span className="font-semibold text-gray-200">{item.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {currentBatter.stickers && currentBatter.stickers.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {currentBatter.stickers.map((sticker, index) => (
+                          <span key={index} className="px-2 py-1 bg-gray-500 rounded-full text-white text-xs font-bold">{sticker}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
           </div>
           
-          {/* Player Cards and Game Log Side-by-Side */}
-          <div className="flex flex-col md:flex-row gap-8">
-            <div className="w-full md:w-1/2">
-                <PlayerCard 
-                  player={currentPitcher} 
-                  isPitcher={true} 
-                  stickers={currentPitcherStickers} 
-                  teamColor={fieldingTeamColor} 
-                  inningsPitched={currentPitcherIP} 
-                  onSubstituteClick={() => setShowSubModal(true)}
-                />
-            </div>
-            <div className="w-full md:w-1/2">
-                <PlayerCard player={currentBatter} isPitcher={false} stickers={currentBatterStickers} effectiveHandedness={currentEffectiveHandedness} teamColor={battingTeamColor} />
-            </div>
-          </div>
           <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
             <h3 className="text-lg font-bold mb-4">Game Log</h3>
-            <div className="bg-gray-900 p-4 rounded-lg h-64 overflow-y-scroll text-sm border border-gray-700 flex flex-col-reverse">
-              {game.gameLog?.slice().reverse().map((log, index) => (
+            <div className="bg-gray-900 p-4 rounded-lg h-64 overflow-y-scroll text-sm border border-gray-700">
+              {game.gameLog?.map((log, index) => (
                 <p key={index} className="mb-1">{log}</p>
               ))}
             </div>
           </div>
-          
         </div>
       )}
     </div>
   );
-};
-
-export default App;
+}
