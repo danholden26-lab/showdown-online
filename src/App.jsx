@@ -2,168 +2,10 @@ import React, { useState, useEffect } from "react";
 import { auth } from "./firebase";
 import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import "./index.css";
+import cardData from './cardData.json';
 
 const appId = "local-dev";
 const initialAuthToken = null;
-
-// Player card deck data with full MLB Showdown mechanics
-const playerCardDeck = [
-  // Home Team (Red)
-  { 
-    id: 'h_p_1', 
-    name: 'Ace Chapman', 
-    type: 'batter',
-    handedness: 'right',
-    team: 'home',
-    stats: { ob: 10, pwr: 9 }, 
-    chart: [
-      { roll: [1, 4], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-      { roll: [5, 7], result: 'walk', text: 'Walk', sticker: 'BB' },
-      { roll: [8, 14], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [15, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-    ]
-  },
-  { 
-    id: 'h_p_2', 
-    name: 'Ohhei Shotani', 
-    type: 'batter',
-    handedness: 'right',
-    team: 'home',
-    stats: { ob: 10, pwr: 9 }, 
-    chart: [
-      { roll: [1, 5], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-      { roll: [6, 12], result: 'walk', text: 'Walk', sticker: 'BB' },
-      { roll: [13, 16], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [15, 15], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [16, 16], result: 'triple', text: 'Triple', sticker: 'XBH' },
-      { roll: [17, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-    ]
-  },
-  { 
-    id: 'h_p_3',
-    name: 'Blake Burton', 
-    type: 'batter',
-    handedness: 'left',
-    team: 'home',
-    stats: { ob: 5, pwr: 10 }, 
-    chart: [
-      { roll: [1, 7], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-      { roll: [8, 14], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [15, 17], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [18, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-    ]
-  },
-  { 
-    id: 'h_p_4',
-    name: 'Zarry Bito',
-    type: 'pitcher',
-    handedness: 'left',
-    team: 'home',
-    stats: { control: 4, pos: 'SP', ip: 6 },
-    chart: [
-      { roll: [1, 3], result: 'out', text: 'Out (PU)', sticker: '' },
-      { roll: [4, 9], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
-      { roll: [10, 13], result: 'out', text: 'Out (GB)', sticker: '' },
-      { roll: [14, 17], result: 'out', text: 'Out (FB)', sticker: '' },
-      { roll: [18, 23], result: 'single', text: 'Single', sticker: '' },
-      { roll: [24, 30], result: 'homerun', text: 'Home Run', sticker: '' },
-    ]
-  },
-  { 
-    id: 'h_p_5', 
-    name: 'A-Rod', 
-    type: 'batter',
-    handedness: 'right',
-    team: 'home',
-    stats: { ob: 12, pwr: 8 }, 
-    chart: [
-      { roll: [1, 3], result: 'out', text: 'Out (PU)', sticker: '' },
-      { roll: [4, 6], result: 'walk', text: 'Walk', sticker: 'BB' },
-      { roll: [7, 13], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [14, 17], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [18, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-    ]
-  },
-  
-  // Away Team (Blue)
-  { 
-    id: 'a_p_1', 
-    name: 'Mike Trout', 
-    type: 'batter',
-    handedness: 'right',
-    team: 'away',
-    stats: { ob: 15, pwr: 12 }, 
-    chart: [
-      { roll: [1, 5], result: 'out', text: 'Out (GB)', sticker: '' },
-      { roll: [6, 12], result: 'walk', text: 'Walk', sticker: 'BB' },
-      { roll: [13, 16], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [17, 19], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [20, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-    ]
-  },
-  { 
-    id: 'a_p_2', 
-    name: 'Jacob deGrom', 
-    type: 'pitcher',
-    handedness: 'right',
-    team: 'away',
-    stats: { control: 3, pos: 'SP', ip: 8 }, 
-    chart: [
-      { roll: [1, 2], result: 'out', text: 'Out (FB)', sticker: '' },
-      { roll: [3, 8], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
-      { roll: [9, 12], result: 'out', text: 'Out (GB)', sticker: '' },
-      { roll: [13, 16], result: 'single', text: 'Single', sticker: '' },
-      { roll: [17, 19], result: 'double', text: 'Double', sticker: '' },
-      { roll: [20, 20], result: 'homerun', text: 'Home Run', sticker: '' },
-    ]
-  },
-  { 
-    id: 'a_p_3', 
-    name: 'Ronald Acuna Jr.', 
-    type: 'batter',
-    handedness: 'right',
-    team: 'away',
-    stats: { ob: 14, pwr: 11 }, 
-    chart: [
-      { roll: [1, 4], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-      { roll: [5, 8], result: 'walk', text: 'Walk', sticker: 'BB' },
-      { roll: [9, 15], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [16, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-    ]
-  },
-  { 
-    id: 'a_p_4', 
-    name: 'Fernando Tatis Jr.', 
-    type: 'batter',
-    handedness: 'right',
-    team: 'away',
-    stats: { ob: 13, pwr: 10 }, 
-    chart: [
-      { roll: [1, 4], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-      { roll: [5, 7], result: 'walk', text: 'Walk', sticker: 'BB' },
-      { roll: [8, 14], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [15, 17], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [18, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
-    ]
-  },
-  { 
-    id: 'a_p_5', 
-    name: 'Trea Turner', 
-    type: 'batter',
-    handedness: 'right',
-    team: 'away',
-    stats: { ob: 12, pwr: 9 }, 
-    chart: [
-      { roll: [1, 4], result: 'out', text: 'Out (GB)', sticker: 'GB' },
-      { roll: [5, 7], result: 'walk', text: 'Walk', sticker: 'BB' },
-      { roll: [8, 15], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [16, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [19, 20], result: 'triple', text: 'Triple', sticker: 'XBH' },
-    ]
-  },
-];
 
 const App = () => {
   const [game, setGame] = useState(null);
@@ -200,10 +42,10 @@ const App = () => {
       return;
     }
 
-    const homeTeamPitcher = { ...playerCardDeck.find(card => card.team === 'home' && card.type === 'pitcher'), stickers: [] };
-    const homeTeamBatters = playerCardDeck.filter(card => card.team === 'home' && card.type === 'batter').map(card => ({...card, stickers: []}));
-    const awayTeamPitcher = { ...playerCardDeck.find(card => card.team === 'away' && card.type === 'pitcher'), stickers: [] };
-    const awayTeamBatters = playerCardDeck.filter(card => card.team === 'away' && card.type === 'batter').map(card => ({...card, stickers: []}));
+    const homeTeamPitcher = { ...cardData.homeTeam.pitcher, stickers: [] };
+    const homeTeamBatters = cardData.homeTeam.batters.map(card => ({...card, stickers: []}));
+    const awayTeamPitcher = { ...cardData.awayTeam.pitcher, stickers: [] };
+    const awayTeamBatters = cardData.awayTeam.batters.map(card => ({...card, stickers: []}));
     
     const newGame = {
       isSoloGame: true,
