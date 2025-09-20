@@ -15,7 +15,7 @@ const playerCardDeck = [
       { roll: [5, 7], result: 'walk', text: 'Walk', sticker: 'BB' },
       { roll: [8, 14], result: 'single', text: 'Single', sticker: 'H' },
       { roll: [15, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [19, 20], result: 'strikeout', text: 'Strikeout', sticker: 'K' },
+      { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'HR' },
     ]
   },
   { 
@@ -60,8 +60,8 @@ const playerCardDeck = [
       { roll: [4, 9], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
       { roll: [10, 13], result: 'out', text: 'Out (GB)', sticker: '' },
       { roll: [14, 17], result: 'out', text: 'Out (FB)', sticker: '' },
-      { roll: [18, 23], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [24, 30], result: 'homerun', text: 'Home Run', sticker: 'XBH' },
+      { roll: [18, 23], result: 'single', text: 'Single', sticker: '' },
+      { roll: [24, 30], result: 'homerun', text: 'Home Run', sticker: '' },
     ]
   },
   { 
@@ -72,7 +72,7 @@ const playerCardDeck = [
     team: 'home',
     stats: { ob: 12, pwr: 8 }, 
     chart: [
-      { roll: [1, 3], result: 'out', text: 'Out (PU)', sticker: 'PU' },
+      { roll: [1, 3], result: 'out', text: 'Out (PU)', sticker: '' },
       { roll: [4, 6], result: 'walk', text: 'Walk', sticker: 'BB' },
       { roll: [7, 13], result: 'single', text: 'Single', sticker: 'H' },
       { roll: [14, 17], result: 'double', text: 'Double', sticker: 'XBH' },
@@ -89,7 +89,7 @@ const playerCardDeck = [
     team: 'away',
     stats: { ob: 15, pwr: 12 }, 
     chart: [
-      { roll: [1, 5], result: 'out', text: 'Out (GB)', sticker: 'GB' },
+      { roll: [1, 5], result: 'out', text: 'Out (GB)', sticker: '' },
       { roll: [6, 12], result: 'walk', text: 'Walk', sticker: 'BB' },
       { roll: [13, 16], result: 'single', text: 'Single', sticker: 'H' },
       { roll: [17, 19], result: 'double', text: 'Double', sticker: 'XBH' },
@@ -107,9 +107,9 @@ const playerCardDeck = [
       { roll: [1, 2], result: 'out', text: 'Out (FB)', sticker: '' },
       { roll: [3, 8], result: 'strikeout', text: 'Out (SO)', sticker: 'K' },
       { roll: [9, 12], result: 'out', text: 'Out (GB)', sticker: '' },
-      { roll: [13, 15], result: 'single', text: 'Single', sticker: 'H' },
-      { roll: [16, 18], result: 'double', text: 'Double', sticker: 'XBH' },
-      { roll: [19, 20], result: 'homerun', text: 'Home Run', sticker: 'XBH' },
+      { roll: [13, 16], result: 'single', text: 'Single', sticker: '' },
+      { roll: [17, 19], result: 'double', text: 'Double', sticker: '' },
+      { roll: [20, 20], result: 'homerun', text: 'Home Run', sticker: '' },
     ]
   },
   { 
@@ -671,65 +671,6 @@ export default function App() {
                   >
                     ➡️ Next At-Bat
                   </button>
-                )}
-              </div>
-              
-              {/* Player Cards */}
-              <div className="mt-8 space-y-6">
-                {/* Pitcher Card */}
-                {currentPitcher && (
-                  <div className={`p-4 rounded-xl shadow-inner border-2 ${currentPitcher.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} text-left`}>
-                    <h4 className="text-xl font-bold mb-2">{currentPitcher.name} (P)</h4>
-                    <div className="flex justify-between items-center text-sm mb-2">
-                      <span className="font-semibold text-gray-400">Control:</span>
-                      <span className="font-bold text-yellow-300">{currentPitcher.stats.control}</span>
-                    </div>
-                    <div className="border-t border-gray-700 my-2"></div>
-                    <ul className="text-xs space-y-1">
-                      {currentPitcher.chart.map((item, index) => (
-                        <li key={index} className="flex justify-between">
-                          <span className="text-gray-400">Roll {item.roll[0]}-{item.roll[1]}:</span>
-                          <span className="font-semibold text-gray-200">{item.text}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {currentPitcher.stickers && currentPitcher.stickers.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {currentPitcher.stickers.map((sticker, index) => (
-                          <span key={index} className="px-2 py-1 bg-gray-500 rounded-full text-white text-xs font-bold">{sticker}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Batter Card */}
-                {currentBatter && (
-                  <div className={`p-4 rounded-xl shadow-inner border-2 ${currentBatter.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} text-left`}>
-                    <h4 className="text-xl font-bold mb-2">{currentBatter.name} (B)</h4>
-                    <div className="flex justify-between items-center text-sm mb-2">
-                      <span className="font-semibold text-gray-400">On-Base:</span>
-                      <span className="font-bold text-green-400">{currentBatter.stats.ob}</span>
-                      <span className="font-semibold text-gray-400">Power:</span>
-                      <span className="font-bold text-red-400">{currentBatter.stats.pwr}</span>
-                    </div>
-                    <div className="border-t border-gray-700 my-2"></div>
-                    <ul className="text-xs space-y-1">
-                      {currentBatter.chart.map((item, index) => (
-                        <li key={index} className="flex justify-between">
-                          <span className="text-gray-400">Roll {item.roll[0]}-{item.roll[1]}:</span>
-                          <span className="font-semibold text-gray-200">{item.text}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {currentBatter.stickers && currentBatter.stickers.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {currentBatter.stickers.map((sticker, index) => (
-                          <span key={index} className="px-2 py-1 bg-gray-500 rounded-full text-white text-xs font-bold">{sticker}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 )}
               </div>
             </div>
