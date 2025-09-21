@@ -18,7 +18,9 @@
           { "roll": [8, 14], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [15, 18], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [19, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["1B"],
+        "fielding": 2
       },
       {
         "id": "h_b_2",
@@ -37,7 +39,9 @@
           { "roll": [15, 15], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [16, 16], "result": "triple", "text": "Triple", "sticker": "XBH" },
           { "roll": [17, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["RF"],
+        "fielding": 1
       },
       {
         "id": "h_b_3",
@@ -54,7 +58,9 @@
           { "roll": [8, 14], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [15, 17], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["3B"],
+        "fielding": 2
       },
       {
         "id": "h_b_4",
@@ -72,7 +78,9 @@
           { "roll": [7, 13], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [14, 17], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["SS"],
+        "fielding": 2
       },
       {
         "id": "h_b_5",
@@ -90,7 +98,9 @@
           { "roll": [6, 12], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [13, 16], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [17, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["OF"],
+        "fielding": 2
       },
       {
         "id": "h_b_6",
@@ -108,7 +118,9 @@
           { "roll": [8, 13], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [14, 17], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["OF"],
+        "fielding": 2
       },
       {
         "id": "h_b_7",
@@ -126,7 +138,9 @@
           { "roll": [7, 18], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [19, 19], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [20, 20], "result": "triple", "text": "Triple", "sticker": "XBH" }
-        ]
+        ],
+        "position": ["RF"],
+        "fielding": 2
       },
       {
         "id": "h_b_8",
@@ -144,7 +158,9 @@
           { "roll": [9, 14], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [15, 17], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["2B"],
+        "fielding": 2
       },
       {
         "id": "h_b_9",
@@ -162,7 +178,9 @@
           { "roll": [9, 16], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [17, 19], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["3B"],
+        "fielding": 2
       }
     ],
     "pitchers": [
@@ -245,7 +263,9 @@
           { "roll": [13, 16], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [17, 19], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["OF"],
+        "fielding": 2
       },
       {
         "id": "a_b_2",
@@ -263,7 +283,9 @@
           { "roll": [9, 15], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [16, 18], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [19, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["OF"],
+        "fielding": 2
       },
       {
         "id": "a_b_3",
@@ -281,7 +303,9 @@
           { "roll": [8, 14], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [15, 17], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["OF"],
+        "fielding": 2
       },
       {
         "id": "a_b_4",
@@ -299,7 +323,9 @@
           { "roll": [8, 15], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [16, 18], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [19, 20], "result": "triple", "text": "Triple", "sticker": "XBH" }
-        ]
+        ],
+        "position": ["SS"],
+        "fielding": 2
       },
       {
         "id": "a_b_5",
@@ -317,7 +343,9 @@
           { "roll": [13, 15], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [16, 17], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["2B"],
+        "fielding": 2
       },
       {
         "id": "a_b_6",
@@ -335,7 +363,9 @@
           { "roll": [9, 13], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [14, 16], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [17, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["C"],
+        "fielding": 2
       },
       {
         "id": "a_b_7",
@@ -353,7 +383,9 @@
           { "roll": [10, 16], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [17, 19], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["3B"],
+        "fielding": 2
       },
       {
         "id": "a_b_8",
@@ -371,7 +403,9 @@
           { "roll": [11, 18], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [19, 19], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [20, 20], "result": "triple", "text": "Triple", "sticker": "XBH" }
-        ]
+        ],
+        "position": ["1B"],
+        "fielding": 2
       },
       {
         "id": "a_b_9",
@@ -389,7 +423,9 @@
           { "roll": [7, 14], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [15, 17], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["OF"],
+        "fielding": 2
       },
       {
         "id": "a_b_10",
@@ -407,7 +443,9 @@
           { "roll": [8, 15], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [16, 18], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [19, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
-        ]
+        ],
+        "position": ["OF"],
+        "fielding": 2
       }
     ],
     "pitchers": [
