@@ -3,7 +3,7 @@
     "name": "Home Team",
     "batters": [
       {
-        "id": "h_p_1",
+        "id": "h_b_1",
         "name": "Ace Chapman",
         "type": "batter",
         "handedness": "right",
@@ -21,7 +21,7 @@
         ]
       },
       {
-        "id": "h_p_2",
+        "id": "h_b_2",
         "name": "Ohhei Shotani",
         "type": "batter",
         "handedness": "right",
@@ -33,14 +33,14 @@
         "chart": [
           { "roll": [1, 5], "result": "out", "text": "Out (GB)", "sticker": "GB" },
           { "roll": [6, 12], "result": "walk", "text": "Walk", "sticker": "BB" },
-          { "roll": [13, 16], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [13, 14], "result": "single", "text": "Single", "sticker": "H" },
           { "roll": [15, 15], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [16, 16], "result": "triple", "text": "Triple", "sticker": "XBH" },
           { "roll": [17, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
         ]
       },
       {
-        "id": "h_p_3",
+        "id": "h_b_3",
         "name": "Blake Burton",
         "type": "batter",
         "handedness": "left",
@@ -57,8 +57,8 @@
         ]
       },
       {
-        "id": "h_p_5",
-        "name": "A-Rod",
+        "id": "h_b_4",
+        "name": "Alex Rodriguez",
         "type": "batter",
         "handedness": "right",
         "team": "home",
@@ -73,34 +73,164 @@
           { "roll": [14, 17], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
         ]
+      },
+      {
+        "id": "h_b_5",
+        "name": "Vladimir Guerrero Sr.",
+        "type": "batter",
+        "handedness": "right",
+        "team": "home",
+        "stats": {
+          "ob": 11,
+          "pwr": 11
+        },
+        "chart": [
+          { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [3, 5], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [6, 12], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [13, 16], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [17, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
+        ]
+      },
+      {
+        "id": "h_b_6",
+        "name": "Ken Griffey Jr.",
+        "type": "batter",
+        "handedness": "left",
+        "team": "home",
+        "stats": {
+          "ob": 13,
+          "pwr": 12
+        },
+        "chart": [
+          { "roll": [1, 3], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [4, 7], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [8, 13], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [14, 17], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
+        ]
+      },
+      {
+        "id": "h_b_7",
+        "name": "Tony Gwynn",
+        "type": "batter",
+        "handedness": "left",
+        "team": "home",
+        "stats": {
+          "ob": 16,
+          "pwr": 4
+        },
+        "chart": [
+          { "roll": [1, 1], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [2, 6], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [7, 18], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [19, 19], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [20, 20], "result": "triple", "text": "Triple", "sticker": "XBH" }
+        ]
+      },
+      {
+        "id": "h_b_8",
+        "name": "Frank Thomas",
+        "type": "batter",
+        "handedness": "right",
+        "team": "home",
+        "stats": {
+          "ob": 14,
+          "pwr": 10
+        },
+        "chart": [
+          { "roll": [1, 2], "result": "out", "text": "Out (SO)", "sticker": "" },
+          { "roll": [3, 8], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [9, 14], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [15, 17], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
+        ]
+      },
+      {
+        "id": "h_b_9",
+        "name": "Cal Ripken Jr.",
+        "type": "batter",
+        "handedness": "right",
+        "team": "home",
+        "stats": {
+          "ob": 9,
+          "pwr": 7
+        },
+        "chart": [
+          { "roll": [1, 5], "result": "out", "text": "Out (GB)", "sticker": "GB" },
+          { "roll": [6, 8], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [9, 16], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [17, 19], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
+        ]
       }
     ],
-    "pitcher": {
-      "id": "h_p_4",
-      "name": "Zarry Bito",
-      "type": "pitcher",
-      "handedness": "left",
-      "team": "home",
-      "stats": {
-        "control": 4,
-        "pos": "SP",
-        "ip": 6
+    "pitchers": [
+      {
+        "id": "h_p_1",
+        "name": "Zarry Bito",
+        "type": "pitcher",
+        "handedness": "left",
+        "team": "home",
+        "stats": {
+          "control": 4,
+          "pos": "SP",
+          "ip": 6
+        },
+        "chart": [
+          { "roll": [1, 3], "result": "out", "text": "Out (PU)", "sticker": "" },
+          { "roll": [4, 9], "result": "strikeout", "text": "Out (SO)", "sticker": "K" },
+          { "roll": [10, 13], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [14, 17], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [18, 19], "result": "single", "text": "Single", "sticker": "" },
+          { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "" }
+        ]
       },
-      "chart": [
-        { "roll": [1, 3], "result": "out", "text": "Out (PU)", "sticker": "" },
-        { "roll": [4, 9], "result": "strikeout", "text": "Out (SO)", "sticker": "K" },
-        { "roll": [10, 13], "result": "out", "text": "Out (GB)", "sticker": "" },
-        { "roll": [14, 17], "result": "out", "text": "Out (FB)", "sticker": "" },
-        { "roll": [18, 23], "result": "single", "text": "Single", "sticker": "" },
-        { "roll": [24, 30], "result": "homerun", "text": "Home Run", "sticker": "" }
-      ]
-    }
+      {
+        "id": "h_p_2",
+        "name": "Cy Young",
+        "type": "pitcher",
+        "handedness": "right",
+        "team": "home",
+        "stats": {
+          "control": 5,
+          "pos": "SP",
+          "ip": 9
+        },
+        "chart": [
+          { "roll": [1, 4], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [5, 12], "result": "strikeout", "text": "Out (SO)", "sticker": "K" },
+          { "roll": [13, 16], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [17, 19], "result": "single", "text": "Single", "sticker": "" },
+          { "roll": [20, 20], "result": "double", "text": "Double", "sticker": "" }
+        ]
+      },
+      {
+        "id": "h_p_3",
+        "name": "Randy Johnson",
+        "type": "pitcher",
+        "handedness": "left",
+        "team": "home",
+        "stats": {
+          "control": 2,
+          "pos": "SP",
+          "ip": 7
+        },
+        "chart": [
+          { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [3, 14], "result": "strikeout", "text": "Out (SO)", "sticker": "K" },
+          { "roll": [15, 17], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [18, 19], "result": "single", "text": "Single", "sticker": "" },
+          { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "" }
+        ]
+      }
+    ]
   },
   "awayTeam": {
     "name": "Away Team",
     "batters": [
       {
-        "id": "a_p_1",
+        "id": "a_b_1",
         "name": "Mike Trout",
         "type": "batter",
         "handedness": "right",
@@ -118,7 +248,7 @@
         ]
       },
       {
-        "id": "a_p_3",
+        "id": "a_b_2",
         "name": "Ronald Acuna Jr.",
         "type": "batter",
         "handedness": "right",
@@ -136,7 +266,7 @@
         ]
       },
       {
-        "id": "a_p_4",
+        "id": "a_b_3",
         "name": "Fernando Tatis Jr.",
         "type": "batter",
         "handedness": "right",
@@ -154,7 +284,7 @@
         ]
       },
       {
-        "id": "a_p_5",
+        "id": "a_b_4",
         "name": "Trea Turner",
         "type": "batter",
         "handedness": "right",
@@ -170,27 +300,196 @@
           { "roll": [16, 18], "result": "double", "text": "Double", "sticker": "XBH" },
           { "roll": [19, 20], "result": "triple", "text": "Triple", "sticker": "XBH" }
         ]
+      },
+      {
+        "id": "a_b_5",
+        "name": "Barry Bonds",
+        "type": "batter",
+        "handedness": "left",
+        "team": "away",
+        "stats": {
+          "ob": 18,
+          "pwr": 14
+        },
+        "chart": [
+          { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [3, 12], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [13, 15], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [16, 17], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
+        ]
+      },
+      {
+        "id": "a_b_6",
+        "name": "Babe Ruth",
+        "type": "batter",
+        "handedness": "left",
+        "team": "away",
+        "stats": {
+          "ob": 13,
+          "pwr": 13
+        },
+        "chart": [
+          { "roll": [1, 3], "result": "strikeout", "text": "Out (SO)", "sticker": "" },
+          { "roll": [4, 8], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [9, 13], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [14, 16], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [17, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
+        ]
+      },
+      {
+        "id": "a_b_7",
+        "name": "Ted Williams",
+        "type": "batter",
+        "handedness": "left",
+        "team": "away",
+        "stats": {
+          "ob": 17,
+          "pwr": 11
+        },
+        "chart": [
+          { "roll": [1, 1], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [2, 9], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [10, 16], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [17, 19], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
+        ]
+      },
+      {
+        "id": "a_b_8",
+        "name": "Rickey Henderson",
+        "type": "batter",
+        "handedness": "right",
+        "team": "away",
+        "stats": {
+          "ob": 15,
+          "pwr": 6
+        },
+        "chart": [
+          { "roll": [1, 2], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [3, 10], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [11, 18], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [19, 19], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [20, 20], "result": "triple", "text": "Triple", "sticker": "XBH" }
+        ]
+      },
+      {
+        "id": "a_b_9",
+        "name": "Hank Aaron",
+        "type": "batter",
+        "handedness": "right",
+        "team": "away",
+        "stats": {
+          "ob": 11,
+          "pwr": 12
+        },
+        "chart": [
+          { "roll": [1, 3], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [4, 6], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [7, 14], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [15, 17], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [18, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
+        ]
+      },
+      {
+        "id": "a_b_10",
+        "name": "Willie Mays",
+        "type": "batter",
+        "handedness": "right",
+        "team": "away",
+        "stats": {
+          "ob": 12,
+          "pwr": 10
+        },
+        "chart": [
+          { "roll": [1, 3], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [4, 7], "result": "walk", "text": "Walk", "sticker": "BB" },
+          { "roll": [8, 15], "result": "single", "text": "Single", "sticker": "H" },
+          { "roll": [16, 18], "result": "double", "text": "Double", "sticker": "XBH" },
+          { "roll": [19, 20], "result": "homerun", "text": "Home Run", "sticker": "HR" }
+        ]
       }
     ],
-    "pitcher": {
-      "id": "a_p_2",
-      "name": "Jacob deGrom",
-      "type": "pitcher",
-      "handedness": "right",
-      "team": "away",
-      "stats": {
-        "control": 3,
-        "pos": "SP",
-        "ip": 8
+    "pitchers": [
+      {
+        "id": "a_p_1",
+        "name": "Jacob deGrom",
+        "type": "pitcher",
+        "handedness": "right",
+        "team": "away",
+        "stats": {
+          "control": 3,
+          "pos": "SP",
+          "ip": 8
+        },
+        "chart": [
+          { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [3, 8], "result": "strikeout", "text": "Out (SO)", "sticker": "K" },
+          { "roll": [9, 12], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [13, 16], "result": "single", "text": "Single", "sticker": "" },
+          { "roll": [17, 19], "result": "double", "text": "Double", "sticker": "" },
+          { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "" }
+        ]
       },
-      "chart": [
-        { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
-        { "roll": [3, 8], "result": "strikeout", "text": "Out (SO)", "sticker": "K" },
-        { "roll": [9, 12], "result": "out", "text": "Out (GB)", "sticker": "" },
-        { "roll": [13, 16], "result": "single", "text": "Single", "sticker": "" },
-        { "roll": [17, 19], "result": "double", "text": "Double", "sticker": "" },
-        { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "" }
-      ]
-    }
+      {
+        "id": "a_p_2",
+        "name": "Pedro Martinez",
+        "type": "pitcher",
+        "handedness": "right",
+        "team": "away",
+        "stats": {
+          "control": 4,
+          "pos": "SP",
+          "ip": 7
+        },
+        "chart": [
+          { "roll": [1, 3], "result": "out", "text": "Out (PU)", "sticker": "" },
+          { "roll": [4, 11], "result": "strikeout", "text": "Out (SO)", "sticker": "K" },
+          { "roll": [12, 15], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [16, 18], "result": "single", "text": "Single", "sticker": "" },
+          { "roll": [19, 20], "result": "double", "text": "Double", "sticker": "" }
+        ]
+      },
+      {
+        "id": "a_p_3",
+        "name": "Walter Johnson",
+        "type": "pitcher",
+        "handedness": "right",
+        "team": "away",
+        "stats": {
+          "control": 3,
+          "pos": "SP",
+          "ip": 9
+        },
+        "chart": [
+          { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [3, 10], "result": "strikeout", "text": "Out (SO)", "sticker": "K" },
+          { "roll": [11, 14], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [15, 17], "result": "single", "text": "Single", "sticker": "" },
+          { "roll": [18, 19], "result": "double", "text": "Double", "sticker": "" },
+          { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "" }
+        ]
+      },
+      {
+        "id": "a_p_4",
+        "name": "Mariano Rivera",
+        "type": "pitcher",
+        "handedness": "right",
+        "team": "away",
+        "stats": {
+          "control": 5,
+          "pos": "CP",
+          "ip": 3
+        },
+        "chart": [
+          { "roll": [1, 4], "result": "out", "text": "Out (GB)", "sticker": "" },
+          { "roll": [5, 10], "result": "strikeout", "text": "Out (SO)", "sticker": "K" },
+          { "roll": [11, 15], "result": "out", "text": "Out (FB)", "sticker": "" },
+          { "roll": [16, 18], "result": "single", "text": "Single", "sticker": "" },
+          { "roll": [19, 19], "result": "double", "text": "Double", "sticker": "" },
+          { "roll": [20, 20], "result": "homerun", "text": "Home Run", "sticker": "" }
+        ]
+      }
+    ]
   }
-}
+} 
