@@ -42,9 +42,9 @@ const App = () => {
       return;
     }
 
-    const homeTeamPitcher = { ...cardData.homeTeam.pitcher, stickers: [] };
     const homeTeamBatters = cardData.homeTeam.batters.map(card => ({...card, stickers: []}));
-    const awayTeamPitcher = { ...cardData.awayTeam.pitcher, stickers: [] };
+    const homeTeamPitcher = { ...cardData.homeTeam.pitchers[0], stickers: [] }; // First pitcher
+    const awayTeamPitcher = { ...cardData.awayTeam.pitchers[0], stickers: [] }; // First pitcher
     const awayTeamBatters = cardData.awayTeam.batters.map(card => ({...card, stickers: []}));
     
     const newGame = {
