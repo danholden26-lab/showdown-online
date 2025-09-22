@@ -135,41 +135,101 @@ const App = () => {
   };
 
 const rollForAtBatResult = () => {
-  if (!game) return;
-  
-  const battingTeam = game.battingTeam;
-  const fieldingTeam = battingTeam === 'home' ? 'away' : 'home';
-  const currentBatter = battingTeam === 'home' 
-    ? game.homeTeamBatters[game.currentBatterIndex]
-    : game.awayTeamBatters[game.currentBatterIndex];
-  const currentPitcher = battingTeam === 'home' ? game.awayTeamPitcher : game.homeTeamPitcher;
+    if (!game) return;
+    
+    const battingTeam = game.battingTeam;
+    const fieldingTeam = battingTeam === 'home' ? 'away' : 'home';
+    const currentBatter = battingTeam === 'home' 
+      ? game.homeTeamBatters[game.currentBatterIndex]
+      : game.awayTeamBatters[game.currentBatterIndex];
+    const currentPitcher = battingTeam === 'home' ? game.awayTeamPitcher : game.homeTeamPitcher;
 
-  const cardToUse = game.currentAdvantage === 'pitcher' ? currentPitcher : currentBatter;
-  const roll2 = Math.floor(Math.random() * 20) + 1;
-  const result = getAtBatResult(roll2, cardToUse);
-  let logMessage = `${currentBatter.name} rolls a ${roll2} against ${cardToUse.name}'s card (${game.currentAdvantage}'s advantage). Result: ${result.text}`;
-  
-  let newOuts = game.outs;
-  let newScore = { ...game.score };
-  let newBases = { ...game.bases };
-  let newBatterIndex = game.currentBatterIndex;
-  let nextBattingTeam = battingTeam;
-  let nextInning = game.inning;
+    const cardToUse = game.currentAdvantage === 'pitcher' ? currentPitcher : currentBatter;
+    const roll2 = Math.floor(Math.random() * 20) + 1;
+    const result = getAtBatResult(roll2, cardToUse);
+    let logMessage = `${currentBatter.name} rolls a ${roll2} against ${cardToUse.name}'s card (${game.currentAdvantage}'s advantage). Result: ${result.text}`;
+    
+    let newOuts = game.outs;
+    let newScore = { ...game.score };
+    let newBases = { ...game.bases };
+    let newBatterIndex = game.currentBatterIndex;
+    let nextBattingTeam = battingTeam;
+    let nextInning = game.inning;
 
-  let updatedHomePitcher = { ...game.homeTeamPitcher };
-  let updatedAwayPitcher = { ...game.awayTeamPitcher };
-  let updatedHomeBatters = [...game.homeTeamBatters];
-  let updatedAwayBatters = [...game.awayTeamBatters];
+    let updatedHomePitcher = { ...game.homeTeamPitcher };
+    let updatedAwayPitcher = { ...game.awayTeamPitcher };
+    let updatedHomeBatters = [...game.homeTeamBatters];
+    let updatedAwayBatters = [...game.awayTeamBatters];
 
-  // Logic to handle out increments correctly
-  const handleOuts = (outCount) => {
-    newOuts += outCount;
-    const pitcherToUpdate = fieldingTeam === 'home' ? updatedHomePitcher : updatedAwayPitcher;
-    pitcherToUpdate.stats.outsRecorded += outCount;
-    // This is the conversion logic to display IP correctly
-      const fullInnings = Math.floor(pitcherToUpdate.stats.outsRecorded / 3);
-      const remainingOuts = pitcherToUpdate.stats.outsRecorded % 3;
-      pitcherToUpdate.stats.currentIP = fullInnings + (remainingOuts / 10);
+    // Logic to handle out increments correctly
+    const handleOuts = (outCount) => {
+        newOuts += outCount;
+        const pitcherToUpdate = fieldingTeam === 'home' ? updatedHomePitcher : updatedAwayPitcher;
+        pitcherToUpdate.stats.outsRecorded += outCount;
+        
+        const fullInnings = Math.floor(pitcherToUpdate.stats.outsRecorded / 3);
+        const remainingOuts = pitcherToUpdate.stats.outsRecorded % 3;
+        pitcherToUpdate.stats.currentIP = fullInnings + (remainingOuts / 10);
+    };
+
+    // --- Double Play Logic (remains unchanged) ---
+    if (result.text.includes('(GB)') && game.bases[battingTeam][0] && newOuts < 2) {
+      const fieldingTeamBatters = fieldingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
+      const infielders = fieldingTeamBatters.filter(player => player.position?.some(p => ['1B', '2B', 'SS', '3B'].includes(p)));
+      const totalInfieldFielding = infielders.reduce((sum, player) => sum + (player.fielding || 0), 0);
+      const fieldingRoll = Math.floor(Math.random() * 20) + 1;
+      const totalFieldingAttempt = fieldingRoll + totalInfieldFielding;
+      const batterSpeed = currentBatter.stats?.speed || currentBatter.speed || 15;
+
+      if (totalFieldingAttempt > batterSpeed) {
+        handleOuts(2); 
+        logMessage += ` DOUBLE PLAY! Fielding roll: ${fieldingRoll} + Infield fielding: ${totalInfieldFielding} = ${totalFieldingAttempt}. The batter and runner on first are out!`;
+        
+        const basesAfterDP = [false, false, false];
+        let runsScored = 0;
+        if (game.bases[battingTeam][2]) runsScored++;
+        if (game.bases[battingTeam][1]) basesAfterDP[2] = true;
+        newBases[battingTeam] = basesAfterDP;
+        newScore[battingTeam] += runsScored;
+
+      } else {
+        handleOuts(1); 
+        const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], {type: 'single', text: 'Single'});
+        newBases[battingTeam] = updatedBases;
+        newScore[battingTeam] += runs;
+        logMessage += ` Fielding roll: ${fieldingRoll} + Infield fielding: ${totalInfieldFielding} = ${totalFieldingAttempt}. Batter beats the throw! A single is recorded.`;
+      }
+    } else if (result.type === 'out' || result.type === 'strikeout') {
+      handleOuts(1);
+    } else {
+      const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], result);
+      newBases[battingTeam] = updatedBases;
+      newScore[battingTeam] += runs;
+    }
+    
+    // Add sticker logic
+    if (result.sticker) {
+      const updatedPlayer = {
+        ...(game.currentAdvantage === 'batter' ? currentBatter : currentPitcher),
+        stickers: [...((game.currentAdvantage === 'batter' ? currentBatter : currentPitcher).stickers || []), result.sticker]
+      };
+      if (game.currentAdvantage === 'batter') {
+        if (battingTeam === 'home') {
+          updatedHomeBatters[game.currentBatterIndex] = updatedPlayer;
+        } else {
+          updatedAwayBatters[game.currentBatterIndex] = updatedPlayer;
+        }
+      } else {
+        if (battingTeam === 'home') {
+          updatedAwayPitcher = updatedPlayer;
+        } else {
+          updatedHomePitcher = updatedPlayer;
+        }
+      }
+    }
+
+    // --- NEW: BATTER PROGRESSION AND INNING CHANGE LOGIC HERE ---
+    // This logic now runs after every at-bat, hit, walk, or out
     if (newOuts >= 3) {
       logMessage += ` Inning over! The ${battingTeam} team is done batting.`;
       newOuts = 0;
@@ -183,80 +243,25 @@ const rollForAtBatResult = () => {
         newBatterIndex = 0;
       }
     }
-  };
-
-  if (result.text.includes('(GB)') && game.bases[battingTeam][0] && newOuts < 2) {
-    // ... (Your existing double play logic) ...
-    const fieldingTeamBatters = fieldingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
-    const infielders = fieldingTeamBatters.filter(player => player.position?.some(p => ['1B', '2B', 'SS', '3B'].includes(p)));
-    const totalInfieldFielding = infielders.reduce((sum, player) => sum + (player.fielding || 0), 0);
-    const fieldingRoll = Math.floor(Math.random() * 20) + 1;
-    const totalFieldingAttempt = fieldingRoll + totalInfieldFielding;
-    const batterSpeed = currentBatter.stats?.speed || currentBatter.speed || 15;
-
-    if (totalFieldingAttempt > batterSpeed) {
-      handleOuts(2); // Two outs for a successful double play
-      logMessage += ` DOUBLE PLAY! Fielding roll: ${fieldingRoll} + Infield fielding: ${totalInfieldFielding} = ${totalFieldingAttempt}. The batter and runner on first are out!`;
-      
-      const basesAfterDP = [false, false, false];
-      let runsScored = 0;
-      if (game.bases[battingTeam][2]) runsScored++;
-      if (game.bases[battingTeam][1]) basesAfterDP[2] = true;
-      newBases[battingTeam] = basesAfterDP;
-      newScore[battingTeam] += runsScored;
-
-    } else {
-      handleOuts(1); // One out for a failed double play
-      const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], {type: 'single', text: 'Single'});
-      newBases[battingTeam] = updatedBases;
-      newScore[battingTeam] += runs;
-      logMessage += ` Fielding roll: ${fieldingRoll} + Infield fielding: ${totalInfieldFielding} = ${totalFieldingAttempt}. Batter beats the throw! A single is recorded.`;
-    }
-  } else if (result.type === 'out' || result.type === 'strikeout') {
-    handleOuts(1); // One out for a normal out
-  } else {
-    const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], result);
-    newBases[battingTeam] = updatedBases;
-    newScore[battingTeam] += runs;
-  }
-  
-  if (result.sticker) {
-    const updatedPlayer = {
-      ...(game.currentAdvantage === 'batter' ? currentBatter : currentPitcher),
-      stickers: [...((game.currentAdvantage === 'batter' ? currentBatter : currentPitcher).stickers || []), result.sticker]
-    };
-    if (game.currentAdvantage === 'batter') {
-      if (battingTeam === 'home') {
-        updatedHomeBatters[game.currentBatterIndex] = updatedPlayer;
-      } else {
-        updatedAwayBatters[game.currentBatterIndex] = updatedPlayer;
-      }
-    } else {
-      if (battingTeam === 'home') {
-        updatedAwayPitcher = updatedPlayer;
-      } else {
-        updatedHomePitcher = updatedPlayer;
-      }
-    }
-  }
-
-  setGame(prevGame => ({
-    ...prevGame,
-    outs: newOuts,
-    score: newScore,
-    bases: newBases,
-    battingTeam: nextBattingTeam,
-    inning: nextInning,
-    currentBatterIndex: newBatterIndex,
-    atBatPhase: 'completed',
-    lastRoll2: roll2,
-    lastResult: result.text,
-    gameLog: [...prevGame.gameLog, logMessage],
-    homeTeamPitcher: updatedHomePitcher,
-    awayTeamPitcher: updatedAwayPitcher,
-    homeTeamBatters: updatedHomeBatters,
-    awayTeamBatters: updatedAwayBatters,
-  }));
+    
+    // Final state update
+    setGame(prevGame => ({
+      ...prevGame,
+      outs: newOuts,
+      score: newScore,
+      bases: newBases,
+      battingTeam: nextBattingTeam,
+      inning: nextInning,
+      currentBatterIndex: newBatterIndex,
+      atBatPhase: 'completed',
+      lastRoll2: roll2,
+      lastResult: result.text,
+      gameLog: [...prevGame.gameLog, logMessage],
+      homeTeamPitcher: updatedHomePitcher,
+      awayTeamPitcher: updatedAwayPitcher,
+      homeTeamBatters: updatedHomeBatters,
+      awayTeamBatters: updatedAwayBatters,
+    }));
 };
 
   const getAtBatResult = (roll, card) => {
