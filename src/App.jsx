@@ -443,150 +443,150 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
             {/* Current At-Bat Section */}
             <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 text-center">
               <h3 className="text-lg font-bold mb-2">Current At-Bat</h3>
-              
-              {/* Advantage Display */}
-              <div className="mb-6">
-                {game.lastAdvantage ? (
-                  <div className={`text-2xl font-bold py-2 px-4 rounded-lg ${
-                    game.lastAdvantage === 'pitcher' ? 'text-green-300 bg-green-900/30' : 'text-red-300 bg-red-900/30'
-                  }`}>
-                    {game.lastAdvantage.toUpperCase()}'S ADVANTAGE
-                  </div>
-                ) : (
-                  <div className="text-xl font-bold text-gray-400 py-2">
-                    WAITING FOR ADVANTAGE
-                  </div>
-                )}
-              </div>
-              {/* NEW BUTTON: Substitute */}
-              <div className="flex justify-center mb-4">
-                <button
-                  onClick={handleSubstitutePitcher}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors"
-                >
-                  Substitute Pitcher
-                </button>
-              </div>
-              {/* Player Cards Side by Side with Roll Results */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                {/* Pitcher Card and Roll */}
-                <div className={`transition-all duration-500 ${
-                  game.lastAdvantage === 'pitcher' ? 'ring-4 ring-green-400 ring-opacity-75 shadow-lg shadow-green-400/50' : ''
-                }`}>
-                  {currentPitcher && (
-                    <div className={`h-60 p-3 rounded-xl shadow-inner border-2 ${currentPitcher.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} ${
-                      game.lastAdvantage === 'pitcher' ? 'bg-green-900/40 border-green-400' : ''
-                    } text-left mb-3 transition-all duration-500`}>
-                      <h4 className={`text-md font-bold mb-2 ${
-                        game.lastAdvantage === 'pitcher' ? 'text-green-300' : ''
-                      }`}>{currentPitcher.name}</h4>
-                      <div className="flex justify-between items-center text-sm mb-2">
-                        <span className="font-semibold text-gray-400">Control:</span>
-                        <span className="font-bold text-yellow-300">{currentPitcher.stats.control}</span>
-                      </div>
-                      {/* Add this new section for Innings Pitched */}
-                      <div className="flex justify-between items-center text-sm mb-2">
-                        <span className="font-semibold text-gray-400">IP:</span>
-                        <span className={`font-bold ${currentPitcher.stats.currentIP >= currentPitcher.stats.ip ? 'text-red-400' : 'text-blue-300'}`}>
-                          {currentPitcher.stats.currentIP.toFixed(1) || 0} / {currentPitcher.stats.ip || 'N/A'}
-                        </span>
-                      </div>
-                      <div className="border-t border-gray-700 my-2"></div>
-                      <div className="overflow-y-auto max-h-32">
-                        <ul className="text-xs space-y-1">
-                          {currentPitcher.chart.map((item, index) => (
-                            <li key={index} className="flex justify-between">
-                              <span className="text-gray-400">{item.roll[0]}-{item.roll[1]}:</span>
-                              <span className="font-semibold text-gray-200">{item.text}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      {currentPitcher.stickers && currentPitcher.stickers.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {currentPitcher.stickers.map((sticker, index) => (
-                            <span key={index} className="px-1 py-0.5 bg-gray-500 rounded text-white text-xs font-bold">{sticker}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Static Pitcher Roll Area */}
-                  <div className={`bg-gray-900 p-3 rounded-lg border-2 border-green-500 text-center transition-all duration-500 ${
-                    game.lastAdvantage === 'pitcher' ? 'ring-2 ring-green-400 bg-green-900/30' : ''
-                  }`}>
-                    <div className="text-sm font-bold text-green-400">PITCHER ROLL</div>
-                    <div className="text-2xl font-bold text-yellow-400">
-                      {game.lastRoll1 || '-'}
-                    </div>
-                    <div className="text-xs text-gray-300">
-                      {game.lastAdvantage ? `${game.lastAdvantage}'s Advantage` : 'Ready to Roll'}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Batter Card and Roll */}
-                <div className={`transition-all duration-500 ${
-                  game.lastAdvantage === 'batter' ? 'ring-4 ring-red-400 ring-opacity-75 shadow-lg shadow-red-400/50' : ''
-                }`}>
-                  {currentBatter && (
-                    <div className={`h-60 p-3 rounded-xl shadow-inner border-2 ${currentBatter.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} ${
-                      game.lastAdvantage === 'batter' ? 'bg-red-900/40 border-red-400' : ''
-                    } text-left mb-3 transition-all duration-500`}>
-                      <h4 className={`text-md font-bold mb-2 ${
-                        game.lastAdvantage === 'batter' ? 'text-red-300' : ''
-                      }`}>{currentBatter.name}</h4>
-                      <div className="flex justify-between items-center text-xs mb-2">
-                        <span className="font-semibold text-gray-400">On-Base:</span>
-                        <span className="font-bold text-green-400">{currentBatter.stats.ob}</span>
-                        <span className="font-semibold text-gray-400">Power:</span>
-                        <span className="font-bold text-red-400">{currentBatter.stats.pwr}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs mb-2">
-                        <span className="font-semibold text-gray-400">Speed:</span>
-                        <span className="font-bold text-red-400">{currentBatter.stats.speed}</span>
-                      </div>
 
-                      {/* NEW: Add position and fielding fields */}
-                      <div className="flex justify-between items-center text-xs mb-2">
-                        <span className="font-semibold text-gray-400">Position(s):</span>
-                        <span className="font-bold text-yellow-300">{currentBatter.position.join(', ')}</span>
-                      </div>
-                      <div className="border-t border-gray-700 my-2"></div>
-                      <div className="overflow-y-auto max-h-32">
-                        <ul className="text-xs space-y-1">
-                          {currentBatter.chart.map((item, index) => (
-                            <li key={index} className="flex justify-between">
-                              <span className="text-gray-400">{item.roll[0]}-{item.roll[1]}:</span>
-                              <span className="font-semibold text-gray-200">{item.text}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      {currentBatter.stickers && currentBatter.stickers.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {currentBatter.stickers.map((sticker, index) => (
-                            <span key={index} className="px-1 py-0.5 bg-gray-500 rounded text-white text-xs font-bold">{sticker}</span>
-                          ))}
-                        </div>
-                      )}
+                {/* Advantage Display */}
+                <div className="mb-6">
+                  {game.lastAdvantage ? (
+                    <div className={`text-2xl font-bold py-2 px-4 rounded-lg ${
+                      game.lastAdvantage === 'pitcher' ? 'text-green-300 bg-green-900/30' : 'text-red-300 bg-red-900/30'
+                    }`}>
+                      {game.lastAdvantage.toUpperCase()}'S ADVANTAGE
+                    </div>
+                  ) : (
+                    <div className="text-xl font-bold text-gray-400 py-2">
+                      WAITING FOR ADVANTAGE
                     </div>
                   )}
-                  
-                  {/* Static Batter Roll Area */}
-                  <div className={`bg-gray-900 p-3 rounded-lg border-2 border-red-500 text-center transition-all duration-500 ${
-                    game.lastAdvantage === 'batter' ? 'ring-2 ring-red-400 bg-red-900/30' : ''
+                </div>
+                {/* NEW BUTTON: Substitute */}
+                <div className="flex justify-center mb-4">
+                  <button
+                    onClick={handleSubstitutePitcher}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors"
+                  >
+                    Substitute Pitcher
+                  </button>
+                </div>
+                {/* Player Cards Side by Side with Roll Results */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {/* Pitcher Card and Roll */}
+                  <div className={`transition-all duration-500 ${
+                    game.lastAdvantage === 'pitcher' ? 'ring-4 ring-green-400 ring-opacity-75 shadow-lg shadow-green-400/50' : ''
                   }`}>
-                    <div className="text-sm font-bold text-red-400">BATTER ROLL</div>
-                    <div className="text-2xl font-bold text-yellow-400">
-                      {game.lastRoll2 || '-'}
-                    </div>
-                    <div className="text-xs text-gray-300">
-                      {game.lastResult || 'Waiting for Roll'}
+                    {currentPitcher && (
+                      <div className={`h-60 p-3 rounded-xl shadow-inner border-2 ${currentPitcher.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} ${
+                        game.lastAdvantage === 'pitcher' ? 'bg-green-900/40 border-green-400' : ''
+                      } text-left mb-3 transition-all duration-500`}>
+                        <h4 className={`text-md font-bold mb-2 ${
+                          game.lastAdvantage === 'pitcher' ? 'text-green-300' : ''
+                        }`}>{currentPitcher.name}</h4>
+                        <div className="flex justify-between items-center text-sm mb-2">
+                          <span className="font-semibold text-gray-400">Control:</span>
+                          <span className="font-bold text-yellow-300">{currentPitcher.stats.control}</span>
+                        </div>
+                        {/* Add this new section for Innings Pitched */}
+                        <div className="flex justify-between items-center text-sm mb-2">
+                          <span className="font-semibold text-gray-400">IP:</span>
+                          <span className={`font-bold ${currentPitcher.stats.currentIP >= currentPitcher.stats.ip ? 'text-red-400' : 'text-blue-300'}`}>
+                            {currentPitcher.stats.currentIP.toFixed(1) || 0} / {currentPitcher.stats.ip || 'N/A'}
+                          </span>
+                        </div>
+                        <div className="border-t border-gray-700 my-2"></div>
+                        <div className="overflow-y-auto max-h-32">
+                          <ul className="text-xs space-y-1">
+                            {currentPitcher.chart.map((item, index) => (
+                              <li key={index} className="flex justify-between">
+                                <span className="text-gray-400">{item.roll[0]}-{item.roll[1]}:</span>
+                                <span className="font-semibold text-gray-200">{item.text}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        {currentPitcher.stickers && currentPitcher.stickers.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {currentPitcher.stickers.map((sticker, index) => (
+                              <span key={index} className="px-1 py-0.5 bg-gray-500 rounded text-white text-xs font-bold">{sticker}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Static Pitcher Roll Area */}
+                    <div className={`bg-gray-900 p-3 rounded-lg border-2 border-green-500 text-center transition-all duration-500 ${
+                      game.lastAdvantage === 'pitcher' ? 'ring-2 ring-green-400 bg-green-900/30' : ''
+                    }`}>
+                      <div className="text-sm font-bold text-green-400">PITCHER ROLL</div>
+                      <div className="text-2xl font-bold text-yellow-400">
+                        {game.lastRoll1 || '-'}
+                      </div>
+                      <div className="text-xs text-gray-300">
+                        {game.lastAdvantage ? `${game.lastAdvantage}'s Advantage` : 'Ready to Roll'}
+                      </div>
                     </div>
                   </div>
-                </div>
+                  
+                  {/* Batter Card and Roll */}
+                  <div className={`transition-all duration-500 ${
+                    game.lastAdvantage === 'batter' ? 'ring-4 ring-red-400 ring-opacity-75 shadow-lg shadow-red-400/50' : ''
+                  }`}>
+                    {currentBatter && (
+                      <div className={`h-60 p-3 rounded-xl shadow-inner border-2 ${currentBatter.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} ${
+                        game.lastAdvantage === 'batter' ? 'bg-red-900/40 border-red-400' : ''
+                      } text-left mb-3 transition-all duration-500`}>
+                        <h4 className={`text-md font-bold mb-2 ${
+                          game.lastAdvantage === 'batter' ? 'text-red-300' : ''
+                        }`}>{currentBatter.name}</h4>
+                        <div className="flex justify-between items-center text-xs mb-2">
+                          <span className="font-semibold text-gray-400">On-Base:</span>
+                          <span className="font-bold text-green-400">{currentBatter.stats.ob}</span>
+                          <span className="font-semibold text-gray-400">Power:</span>
+                          <span className="font-bold text-red-400">{currentBatter.stats.pwr}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs mb-2">
+                          <span className="font-semibold text-gray-400">Speed:</span>
+                          <span className="font-bold text-red-400">{currentBatter.stats.speed}</span>
+                        </div>
+
+                        {/* NEW: Add position and fielding fields */}
+                        <div className="flex justify-between items-center text-xs mb-2">
+                          <span className="font-semibold text-gray-400">Position(s):</span>
+                          <span className="font-bold text-yellow-300">{currentBatter.position.join(', ')}</span>
+                        </div>
+                        <div className="border-t border-gray-700 my-2"></div>
+                        <div className="overflow-y-auto max-h-32">
+                          <ul className="text-xs space-y-1">
+                            {currentBatter.chart.map((item, index) => (
+                              <li key={index} className="flex justify-between">
+                                <span className="text-gray-400">{item.roll[0]}-{item.roll[1]}:</span>
+                                <span className="font-semibold text-gray-200">{item.text}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        {currentBatter.stickers && currentBatter.stickers.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {currentBatter.stickers.map((sticker, index) => (
+                              <span key={index} className="px-1 py-0.5 bg-gray-500 rounded text-white text-xs font-bold">{sticker}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Static Batter Roll Area */}
+                    <div className={`bg-gray-900 p-3 rounded-lg border-2 border-red-500 text-center transition-all duration-500 ${
+                      game.lastAdvantage === 'batter' ? 'ring-2 ring-red-400 bg-red-900/30' : ''
+                    }`}>
+                      <div className="text-sm font-bold text-red-400">BATTER ROLL</div>
+                      <div className="text-2xl font-bold text-yellow-400">
+                        {game.lastRoll2 || '-'}
+                      </div>
+                      <div className="text-xs text-gray-300">
+                        {game.lastResult || 'Waiting for Roll'}
+                      </div>
+                    </div>
+                  </div>
               </div>
               
               {/* Action Buttons */}
@@ -661,11 +661,6 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
             
             {/* Bases display with SVG - Bigger */}
             <div className="flex justify-center">
-              {/* NEW: Display Infield Fielding Sum */}
-              <div className="bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-700 mb-6 text-center">
-                <h4 className="font-bold text-lg text-yellow-300">Infield Fielding Sum</h4>
-                <p className="text-2xl font-extrabold text-white mt-2">{totalInfieldFielding}</p>
-              </div>
               <svg width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" className="text-gray-600">
                 {/* Infield */}
                 <polygon points="160,280 280,160 160,40 40,160" fill="#2D4636" />
@@ -705,26 +700,29 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
                 )}
               </svg>
             </div>
-            
+            {/* --- NEW: Flex container to hold the stats tiles under the bases --- */}
+            <div className="flex justify-center items-center gap-4 mt-6">
+                {/* On-Deck Batter Tile */}
+                {onDeckBatter && (
+                    <div className={`h-24 p-2 rounded-xl shadow-inner border-2 ${onDeckBatter.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} text-center transition-all duration-500`}>
+                        <h4 className="font-bold text-sm mb-1 text-white">On Deck</h4>
+                        <p className="text-lg font-semibold text-yellow-300">
+                            {onDeckBatter.name}
+                        </p>
+                    </div>
+                )}
+                {/* Infield Fielding Sum */}
+                <div className="bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-700 text-center">
+                    <h4 className="font-bold text-lg text-yellow-300">Infield Fielding Sum</h4>
+                    <p className="text-2xl font-extrabold text-white mt-2">{totalInfieldFielding}</p>
+                </div>
+            </div>
             {/* Last Play Result */}
             <div className="text-center mt-6">
               <div className="text-lg font-bold text-blue-400">
                 {game.lastResult ? `Last Play: ${game.lastResult}` : 'Game in Progress'}
               </div>
-            </div>
-            {/* On Deck Batter */}
-            <div className="text-center mt-2">
-              <div className="text-md font-bold text-blue-400">
-                <h3 className="text-md font-bold mb-4">On Deck Batter</h3>
-              </div>
-            </div>
-              {/* Add this JSX tile somewhere near the current batter's card */}
-              <div className={`h-24 p-2 rounded-xl shadow-inner border-2 ${onDeckBatter?.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} text-left mb-3 transition-all duration-500`}>
-                  <h4 className={`text-sm font-bold mb-2`}>{onDeckBatter?.name}</h4>
-                  <span className="font-semibold text-gray-400">On-Base:</span>
-                  <span className="font-bold text-green-400">{currentBatter.stats.ob}</span>
-              </div>
-              
+            </div>              
           </div>
         </div>
         
