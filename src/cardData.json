@@ -10,7 +10,8 @@
         "team": "home",
         "stats": {
           "ob": 10,
-          "pwr": 9
+          "pwr": 9,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 4], "result": "out", "text": "Out (GB)", "sticker": "GB" },
@@ -30,7 +31,8 @@
         "team": "home",
         "stats": {
           "ob": 10,
-          "pwr": 9
+          "pwr": 9,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 5], "result": "out", "text": "Out (GB)", "sticker": "GB" },
@@ -51,7 +53,8 @@
         "team": "home",
         "stats": {
           "ob": 5,
-          "pwr": 10
+          "pwr": 10,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 7], "result": "out", "text": "Out (GB)", "sticker": "GB" },
@@ -70,7 +73,8 @@
         "team": "home",
         "stats": {
           "ob": 12,
-          "pwr": 8
+          "pwr": 8,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 3], "result": "out", "text": "Out (PU)", "sticker": "" },
@@ -90,7 +94,8 @@
         "team": "home",
         "stats": {
           "ob": 11,
-          "pwr": 11
+          "pwr": 11,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
@@ -110,7 +115,8 @@
         "team": "home",
         "stats": {
           "ob": 13,
-          "pwr": 12
+          "pwr": 12,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 3], "result": "out", "text": "Out (FB)", "sticker": "" },
@@ -130,7 +136,8 @@
         "team": "home",
         "stats": {
           "ob": 16,
-          "pwr": 4
+          "pwr": 4,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 1], "result": "out", "text": "Out (GB)", "sticker": "" },
@@ -150,7 +157,8 @@
         "team": "home",
         "stats": {
           "ob": 14,
-          "pwr": 10
+          "pwr": 10,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 2], "result": "out", "text": "Out (SO)", "sticker": "" },
@@ -170,7 +178,8 @@
         "team": "home",
         "stats": {
           "ob": 9,
-          "pwr": 7
+          "pwr": 7,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 5], "result": "out", "text": "Out (GB)", "sticker": "GB" },
@@ -193,7 +202,9 @@
         "stats": {
           "control": 4,
           "pos": "SP",
-          "ip": 6
+          "ip": 6,
+          "currentIP": 0,
+          "outsRecorded": 0
         },
         "chart": [
           { "roll": [1, 3], "result": "out", "text": "Out (PU)", "sticker": "" },
@@ -213,7 +224,9 @@
         "stats": {
           "control": 5,
           "pos": "SP",
-          "ip": 9
+          "ip": 9,
+          "currentIP": 0,
+          "outsRecorded": 0
         },
         "chart": [
           { "roll": [1, 4], "result": "out", "text": "Out (GB)", "sticker": "" },
@@ -232,7 +245,9 @@
         "stats": {
           "control": 2,
           "pos": "SP",
-          "ip": 7
+          "ip": 7,
+          "currentIP": 0,
+          "outsRecorded": 0
         },
         "chart": [
           { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
@@ -255,7 +270,8 @@
         "team": "away",
         "stats": {
           "ob": 15,
-          "pwr": 12
+          "pwr": 12,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 5], "result": "out", "text": "Out (GB)", "sticker": "" },
@@ -275,7 +291,8 @@
         "team": "away",
         "stats": {
           "ob": 14,
-          "pwr": 11
+          "pwr": 11,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 4], "result": "out", "text": "Out (GB)", "sticker": "GB" },
@@ -295,7 +312,8 @@
         "team": "away",
         "stats": {
           "ob": 13,
-          "pwr": 10
+          "pwr": 10,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 4], "result": "out", "text": "Out (GB)", "sticker": "GB" },
@@ -315,7 +333,8 @@
         "team": "away",
         "stats": {
           "ob": 12,
-          "pwr": 9
+          "pwr": 9,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 4], "result": "out", "text": "Out (GB)", "sticker": "GB" },
@@ -335,7 +354,8 @@
         "team": "away",
         "stats": {
           "ob": 18,
-          "pwr": 14
+          "pwr": 14,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
@@ -355,7 +375,8 @@
         "team": "away",
         "stats": {
           "ob": 13,
-          "pwr": 13
+          "pwr": 13,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 3], "result": "strikeout", "text": "Out (SO)", "sticker": "" },
@@ -375,7 +396,8 @@
         "team": "away",
         "stats": {
           "ob": 17,
-          "pwr": 11
+          "pwr": 11,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 1], "result": "out", "text": "Out (FB)", "sticker": "" },
@@ -395,7 +417,8 @@
         "team": "away",
         "stats": {
           "ob": 15,
-          "pwr": 6
+          "pwr": 6,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 2], "result": "out", "text": "Out (GB)", "sticker": "" },
@@ -415,7 +438,8 @@
         "team": "away",
         "stats": {
           "ob": 11,
-          "pwr": 12
+          "pwr": 12,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 3], "result": "out", "text": "Out (GB)", "sticker": "" },
@@ -435,7 +459,8 @@
         "team": "away",
         "stats": {
           "ob": 12,
-          "pwr": 10
+          "pwr": 10,
+          "speed": 15
         },
         "chart": [
           { "roll": [1, 3], "result": "out", "text": "Out (FB)", "sticker": "" },
@@ -458,7 +483,9 @@
         "stats": {
           "control": 3,
           "pos": "SP",
-          "ip": 8
+          "ip": 8,
+          "currentIP": 0,
+          "outsRecorded": 0
         },
         "chart": [
           { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
@@ -478,7 +505,9 @@
         "stats": {
           "control": 4,
           "pos": "SP",
-          "ip": 7
+          "ip": 7,
+          "currentIP": 0,
+          "outsRecorded": 0
         },
         "chart": [
           { "roll": [1, 3], "result": "out", "text": "Out (PU)", "sticker": "" },
@@ -497,7 +526,9 @@
         "stats": {
           "control": 3,
           "pos": "SP",
-          "ip": 9
+          "ip": 9,
+          "currentIP": 0,
+          "outsRecorded": 0
         },
         "chart": [
           { "roll": [1, 2], "result": "out", "text": "Out (FB)", "sticker": "" },
@@ -517,7 +548,9 @@
         "stats": {
           "control": 5,
           "pos": "CP",
-          "ip": 3
+          "ip": 3,
+          "currentIP":0,
+          "outsRecorded": 0
         },
         "chart": [
           { "roll": [1, 4], "result": "out", "text": "Out (GB)", "sticker": "" },
