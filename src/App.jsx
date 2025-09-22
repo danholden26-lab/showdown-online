@@ -14,6 +14,8 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+  const [isStealMode, setIsStealMode] = useState(false);
+  const [selectedRunnersForSteal, setSelectedRunnersForSteal] = useState([]);
 
 
   // Auth listener
@@ -55,7 +57,7 @@ const App = () => {
       inning: 1,
       outs: 0,
       score: { home: 0, away: 0 },
-      bases: { home: [false, false, false], away: [false, false, false] },
+      bases: { home: [null, null, null], away: [null, null, null], },
       gameLog: [`Solo game started. The Away team is batting first. User: ${userId}`],
       homeTeamBatters: homeTeamBatters,
       awayTeamBatters: awayTeamBatters,
@@ -114,51 +116,58 @@ const App = () => {
     setIsModalOpen(true);
   };
 
-  // Determine the current pitcher and batter based on game state
-  //const battingTeam = game.battingTeam;
-
-  // New version of the advanceToNextAtBat function
-  const advanceToNextAtBat = () => {
+// New version of the advanceToNextAtBat function
+const advanceToNextAtBat = () => {
     if (!game) return;
 
     const battingTeam = game.battingTeam;
     const fieldingTeam = battingTeam === 'home' ? 'away' : 'home';
-    const updatedHomeBatters = [...game.homeTeamBatters];
-    const updatedAwayBatters = [...game.awayTeamBatters];
 
     let nextBatterIndex = game.currentBatterIndex;
     let nextBattingTeam = battingTeam;
     let nextInning = game.inning;
     let newOuts = game.outs;
-    
+    let newBases = game.bases;
+
     // Logic to handle end of inning
     if (game.outs >= 3) {
-      newOuts = 0;
-      nextBatterIndex = 0;
-      nextBattingTeam = fieldingTeam;
-      nextInning = game.inning % 1 === 0 ? game.inning + 0.5 : game.inning + 0.5;
-    } else {
-      // Normal batter progression
-      nextBatterIndex++;
-      const currentBatters = battingTeam === 'home' ? updatedHomeBatters : updatedAwayBatters;
-      if (nextBatterIndex >= currentBatters.length) {
+        newOuts = 0;
         nextBatterIndex = 0;
-      }
+        nextBattingTeam = fieldingTeam;
+        
+        // This logic handles top and bottom halves of the inning
+        if (battingTeam === 'home') {
+            nextInning = Math.floor(game.inning) + 1;
+        } else {
+            nextInning = game.inning + 0.5;
+        }
+
+        // Reset the bases for both teams
+        newBases = { home: [null, null, null], away: [null, null, null] };
+
+    } else {
+        // Normal batter progression
+        nextBatterIndex++;
+        const currentBatters = battingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
+        if (nextBatterIndex >= currentBatters.length) {
+            nextBatterIndex = 0;
+        }
     }
 
     setGame(prev => ({
-      ...prev,
-      outs: newOuts,
-      inning: nextInning,
-      currentBatterIndex: nextBatterIndex,
-      battingTeam: nextBattingTeam,
-      atBatPhase: 'firstRoll',
-      lastRoll1: null,
-      lastRoll2: null,
-      lastAdvantage: null,
-      lastResult: null,
+        ...prev,
+        outs: newOuts,
+        inning: nextInning,
+        currentBatterIndex: nextBatterIndex,
+        battingTeam: nextBattingTeam,
+        bases: newBases, // Add this line to update the bases
+        atBatPhase: 'firstRoll',
+        lastRoll1: null,
+        lastRoll2: null,
+        lastAdvantage: null,
+        lastResult: null,
     }));
-  };
+};
 
 const rollForAtBatResult = () => {
     if (!game) return;
@@ -166,25 +175,30 @@ const rollForAtBatResult = () => {
     const battingTeam = game.battingTeam;
     const fieldingTeam = battingTeam === 'home' ? 'away' : 'home';
     const currentBatter = battingTeam === 'home' 
-      ? game.homeTeamBatters[game.currentBatterIndex]
-      : game.awayTeamBatters[game.currentBatterIndex];
+        ? game.homeTeamBatters[game.currentBatterIndex]
+        : game.awayTeamBatters[game.currentBatterIndex];
     const currentPitcher = battingTeam === 'home' ? game.awayTeamPitcher : game.homeTeamPitcher;
+    const teamRoster = battingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
+
+    const effectiveBatterHandedness = currentBatter.handedness === 'switch'
+        ? (currentPitcher.handedness === 'right' ? 'left' : 'right')
+        : currentBatter.handedness;
 
     const cardToUse = game.currentAdvantage === 'pitcher' ? currentPitcher : currentBatter;
     const roll2 = Math.floor(Math.random() * 20) + 1;
     const result = getAtBatResult(roll2, cardToUse);
     let logMessage = `${currentBatter.name} rolls a ${roll2} against ${cardToUse.name}'s card (${game.currentAdvantage}'s advantage). Result: ${result.text}`;
     
+    // Create a working copy of the bases, correctly
+    let newBases = [...game.bases[game.battingTeam]];
     let newOuts = game.outs;
     let newScore = { ...game.score };
-    let newBases = { ...game.bases };
 
     let updatedHomePitcher = { ...game.homeTeamPitcher };
     let updatedAwayPitcher = { ...game.awayTeamPitcher };
     let updatedHomeBatters = [...game.homeTeamBatters];
     let updatedAwayBatters = [...game.awayTeamBatters];
 
-    // Logic to handle out increments correctly
     const handleOuts = (outCount) => {
         newOuts += outCount;
         const pitcherToUpdate = fieldingTeam === 'home' ? updatedHomePitcher : updatedAwayPitcher;
@@ -195,77 +209,122 @@ const rollForAtBatResult = () => {
         pitcherToUpdate.stats.currentIP = fullInnings + (remainingOuts / 10);
     };
 
-    // --- Double Play Logic (remains unchanged) ---
-    if (result.text.includes('(GB)') && game.bases[battingTeam][0] && newOuts < 2) {
-      const fieldingTeamBatters = fieldingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
-      const infielders = fieldingTeamBatters.filter(player => player.position?.some(p => ['1B', '2B', 'SS', '3B'].includes(p)));
-      const totalInfieldFielding = infielders.reduce((sum, player) => sum + (player.fielding || 0), 0);
-      const fieldingRoll = Math.floor(Math.random() * 20) + 1;
-      const totalFieldingAttempt = fieldingRoll + totalInfieldFielding;
-      const batterSpeed = currentBatter.stats?.speed || currentBatter.speed || 15;
+    // --- NEW: Steal Attempt Resolution ---
+    if (selectedRunnersForSteal.length > 0) {
+        const isStrikeout = result.text.includes('(SO)');
+        const isOut = result.text.includes('(PU)') || result.text.includes('(FB)') || result.text.includes('(GB)');
+        const isHit = result.text.includes('(Single)') || result.text.includes('(Double)') || result.text.includes('(Triple)') || result.text.includes('(HR)');
 
-      if (totalFieldingAttempt > batterSpeed) {
-        handleOuts(2); 
-        logMessage += ` DOUBLE PLAY! Fielding roll: ${fieldingRoll} + Infield fielding: ${totalInfieldFielding} = ${totalFieldingAttempt}. The batter and runner on first are out!`;
-        
-        const basesAfterDP = [false, false, false];
-        let runsScored = 0;
-        if (game.bases[battingTeam][2]) runsScored++;
-        if (game.bases[battingTeam][1]) basesAfterDP[2] = true;
-        newBases[battingTeam] = basesAfterDP;
-        newScore[battingTeam] += runsScored;
+        if (isStrikeout) {
+            selectedRunnersForSteal.forEach(baseIndex => {
+                const runner = newBases[baseIndex];
+                const stealRoll = Math.floor(Math.random() * 20) + 1;
 
-      } else {
-        handleOuts(1); 
-        const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], {type: 'single', text: 'Single'});
-        newBases[battingTeam] = updatedBases;
+                if (stealRoll <= runner.stats.speed) {
+                    logMessage += `${runner.name} successfully steals to ${baseIndex + 2}nd base! (Roll: ${stealRoll})`;
+                    newBases[baseIndex] = null;
+                    newBases[baseIndex + 1] = runner;
+                } else {
+                    logMessage += `${runner.name} is caught stealing! (Roll: ${stealRoll})`;
+                    newBases[baseIndex] = null;
+                    newOuts++;
+                }
+            });
+        } 
+        else if (isOut) {
+            logMessage += `Runners stay put.`;
+        }
+        else if (isHit) {
+            // No action needed here
+        }
+        setSelectedRunnersForSteal([]);
+    }
+    // --- End of new code ---
+
+    // --- Double Play Logic ---
+    // --- Updated Ground Ball Logic ---
+    // Determine how to update the game state based on the result
+    if (result.type === 'strikeout' || result.text.includes('(SO)')) {
+        handleOuts(1);
+    } 
+    else if (result.text.includes('(PU)') || result.text.includes('(FB)')) {
+        // Fly balls and pop-ups are simple outs.
+        handleOuts(1);
+    }
+    else if (result.text.includes('(GB)')) {
+        // Ground ball logic with or without a runner on first
+        if (game.bases[battingTeam][0] && newOuts < 2) {
+            // According to your rule, the runner on first is out automatically.
+            handleOuts(1);
+            newBases[0] = null;
+            logMessage += ` The runner on first is out on a ground ball.`;
+
+            // Now, roll to see if the batter is also out.
+            const fieldingTeamBatters = fieldingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
+            const infielders = fieldingTeamBatters.filter(player => player.position?.some(p => ['1B', '2B', 'SS', '3B'].includes(p)));
+            const totalInfieldFielding = infielders.reduce((sum, player) => sum + (player.fielding || 0), 0);
+            const fieldingRoll = Math.floor(Math.random() * 20) + 1;
+            const totalFieldingAttempt = fieldingRoll + totalInfieldFielding;
+            const batterSpeed = currentBatter.stats?.speed || 15;
+
+            if (totalFieldingAttempt > batterSpeed) {
+                handleOuts(1);
+                logMessage += ` DOUBLE PLAY! The batter is also out.`;
+            } else {
+                logMessage += ` FIELDER'S CHOICE! The batter beats the throw to first and is safe.`;
+                const { bases: updatedBases, score: runs } = updateBases(newBases, { type: 'walk' }, currentBatter);
+                newBases = updatedBases;
+                newScore[battingTeam] += runs;
+            }
+        } else {
+            // If no runner on first, the ground ball is a simple out for the batter.
+            handleOuts(1);
+        }
+    }
+    else {
+        // All other results (walks, singles, etc.) update bases
+        const { bases: updatedBases, score: runs } = updateBases(newBases, result, currentBatter);
+        newBases = updatedBases;
         newScore[battingTeam] += runs;
-        logMessage += ` Fielding roll: ${fieldingRoll} + Infield fielding: ${totalInfieldFielding} = ${totalFieldingAttempt}. Batter beats the throw! A single is recorded.`;
-      }
-    } else if (result.type === 'out' || result.type === 'strikeout') {
-      handleOuts(1);
-    } else {
-      const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], result);
-      newBases[battingTeam] = updatedBases;
-      newScore[battingTeam] += runs;
     }
     
-    // Add sticker logic
     if (result.sticker) {
-      const updatedPlayer = {
-        ...(game.currentAdvantage === 'batter' ? currentBatter : currentPitcher),
-        stickers: [...((game.currentAdvantage === 'batter' ? currentBatter : currentPitcher).stickers || []), result.sticker]
-      };
-      if (game.currentAdvantage === 'batter') {
-        if (battingTeam === 'home') {
-          updatedHomeBatters[game.currentBatterIndex] = updatedPlayer;
+        const updatedPlayer = {
+            ...(game.currentAdvantage === 'batter' ? currentBatter : currentPitcher),
+            stickers: [...((game.currentAdvantage === 'batter' ? currentBatter : currentPitcher).stickers || []), result.sticker]
+        };
+        if (game.currentAdvantage === 'batter') {
+            if (battingTeam === 'home') {
+                updatedHomeBatters[game.currentBatterIndex] = updatedPlayer;
+            } else {
+                updatedAwayBatters[game.currentBatterIndex] = updatedPlayer;
+            }
         } else {
-          updatedAwayBatters[game.currentBatterIndex] = updatedPlayer;
+            if (battingTeam === 'home') {
+                updatedAwayPitcher = updatedPlayer;
+            } else {
+                updatedHomePitcher = updatedPlayer;
+            }
         }
-      } else {
-        if (battingTeam === 'home') {
-          updatedAwayPitcher = updatedPlayer;
-        } else {
-          updatedHomePitcher = updatedPlayer;
-        }
-      }
     }
-
     
-    // Final state update
     setGame(prevGame => ({
-      ...prevGame,
-      outs: newOuts,
-      score: newScore,
-      bases: newBases,
-      atBatPhase: 'completed',
-      lastRoll2: roll2,
-      lastResult: result.text,
-      gameLog: [...prevGame.gameLog, logMessage],
-      homeTeamPitcher: updatedHomePitcher,
-      awayTeamPitcher: updatedAwayPitcher,
-      homeTeamBatters: updatedHomeBatters,
-      awayTeamBatters: updatedAwayBatters,
+        ...prevGame,
+        outs: newOuts,
+        score: newScore,
+        bases: {
+            ...prevGame.bases,
+            [game.battingTeam]: newBases,
+        },
+        atBatPhase: 'completed',
+        lastRoll2: roll2,
+        lastResult: result.text,
+        gameLog: [...prevGame.gameLog, logMessage],
+        homeTeamPitcher: updatedHomePitcher,
+        awayTeamPitcher: updatedAwayPitcher,
+        homeTeamBatters: updatedHomeBatters,
+        awayTeamBatters: updatedAwayBatters,
+        effectiveHandedness: effectiveBatterHandedness,
     }));
 };
 
@@ -278,54 +337,137 @@ const rollForAtBatResult = () => {
     return { type: 'out', text: 'Out', sticker: 'GB' };
   };
 
-  const updateBases = (currentBases, result) => {
-    let newBases = [...currentBases];
+  const handleRunnerSelection = (baseIndex) => {
+      if (!isStealMode) return;
+      
+      // Toggle runner selection
+      setSelectedRunnersForSteal(prev =>
+          prev.includes(baseIndex)
+              ? prev.filter(idx => idx !== baseIndex)
+              : [...prev, baseIndex]
+      );
+  };
+  // This function is called by the new "Confirm Steal" button
+  const confirmSteal = () => {
+      // We are no longer resolving the steal here.
+      // Instead, we just reset the UI and prepare the game state.
+      setIsStealMode(false);
+      
+      // The runners have now been "flagged" for a steal attempt.
+      // The resolution happens in the next roll.
+  };
+  const attemptSteal = () => {
+      const battingTeam = game.battingTeam;
+      const newBases = [...game.bases[game.battingTeam]];
+      const newGameLog = [...game.gameLog];
+      const newOuts = game.outs;
+
+      selectedRunnersForSteal.forEach(baseIndex => {
+          // You'll need to find the correct runner here
+          // The previous simple logic of `game.currentBatterIndex - 1` won't work for multiple runners.
+          // A better approach would be to track which player is on which base in your state.
+
+          // Placeholder for a simple example
+          const stealRoll = Math.floor(Math.random() * 20) + 1;
+          const runnerSpeed = 10; // Placeholder for a real stat lookup
+
+          if (stealRoll <= runnerSpeed) {
+              // Success
+              newGameLog.push(`Runner from ${baseIndex + 1}st/nd/rd base successfully steals! (Roll: ${stealRoll})`);
+              // Logic to move the runner from baseIndex to baseIndex + 1
+          } else {
+              // Caught Stealing
+              newGameLog.push(`Runner from ${baseIndex + 1}st/nd/rd base is caught stealing! (Roll: ${stealRoll})`);
+              // Logic to remove the runner and add an out
+          }
+      });
+
+      // Reset UI and state after the attempt
+      setIsStealMode(false);
+      setSelectedRunnersForSteal([]);
+
+      setGame(prevGame => ({
+          ...prevGame,
+          bases: {
+              ...prevGame.bases,
+              [game.battingTeam]: newBases,
+          },
+          outs: newOuts,
+          gameLog: newGameLog,
+      }));
+  };
+  
+  const updateBases = (currentBases, result, currentBatter) => {
+    let newBases = [...currentBases]; 
     let score = 0;
     
+    // Handle Walks (This logic is correct and remains unchanged)
     if (result.type === 'walk') {
-      if (newBases[0] && newBases[1] && newBases[2]) {
+        const hasRunnerOnFirst = newBases[0];
+        const hasRunnerOnSecond = newBases[1];
+        const hasRunnerOnThird = newBases[2];
+        
+        if (hasRunnerOnFirst && hasRunnerOnSecond && hasRunnerOnThird) {
+            score++;
+        }
+        
+        if (hasRunnerOnSecond && hasRunnerOnFirst) {
+            newBases[2] = newBases[1];
+        }
+        
+        if (hasRunnerOnFirst) {
+            newBases[1] = newBases[0];
+        }
+        
+        newBases[0] = currentBatter;
+
+    } 
+    // Handle Singles (This is the section to update)
+    else if (result.type === 'single') {
+        // A single advances runners by at least two bases, and the batter to first.
+        // Score runners from third
+        if (newBases[2]) score++;
+        
+        // Score runners from second
+        if (newBases[1]) score++;
+
+        // Advance runners from first to second
+        if (newBases[0]) newBases[1] = newBases[0];
+
+        // The batter always goes to first
+        newBases[0] = currentBatter;
+        
+        // Clear the old bases since everyone moved
+        newBases[2] = null;
+    }
+    // Handle Doubles
+    else if (result.type === 'double') {
+        if (newBases[2]) score++;
+        if (newBases[1]) score++;
+        if (newBases[0]) newBases[2] = newBases[0];
+        newBases[1] = currentBatter;
+        newBases[0] = null;
+    } 
+    // Handle Triples
+    else if (result.type === 'triple') {
+        if (newBases[0]) score++;
+        if (newBases[1]) score++;
+        if (newBases[2]) score++;
+        newBases = [null, null, null];
+        newBases[2] = currentBatter;
+    } 
+    // Handle Homeruns
+    else if (result.type === 'homerun') {
+        score += (newBases[0] ? 1 : 0) + (newBases[1] ? 1 : 0) + (newBases[2] ? 1 : 0);
+        newBases = [null, null, null];
         score++;
-      }
-      if (newBases[1] && newBases[0]) {
-        newBases[2] = true;
-      }
-      if (newBases[0]) {
-        newBases[1] = true;
-      }
-      newBases[0] = true;
-    } else if (result.type === 'single') {
-      const nextBases = [false, false, false];
-      if (newBases[2]) {
-        score++;
-      }
-      if (newBases[1]) {
-        nextBases[2] = true;
-      }
-      if (newBases[0]) {
-        nextBases[1] = true;
-      }
-      nextBases[0] = true;
-      return { bases: nextBases, score };
-    } else if (result.type === 'double') {
-      if (newBases[2]) { score++; }
-      if (newBases[1]) { score++; }
-      if (newBases[0]) { newBases[2] = true; }
-      newBases[1] = true;
-      newBases[0] = false;
-    } else if (result.type === 'triple') {
-      if (newBases[0]) { score++; }
-      if (newBases[1]) { score++; }
-      if (newBases[2]) { score++; }
-      newBases = [false, false, false];
-      newBases[2] = true;
-    } else if (result.type === 'homerun') {
-      score += (newBases[0] ? 1 : 0) + (newBases[1] ? 1 : 0) + (newBases[2] ? 1 : 0);
-      newBases = [false, false, false];
-      score++;
+    } else {
+        // For all other results (outs), no bases change
     }
     
     return { bases: newBases, score };
-  };
+};
+  
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">Loading...</div>;
@@ -467,6 +609,32 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
                     Substitute Pitcher
                   </button>
                 </div>
+                {/* New 'Steal' toggle button */}
+                {!isStealMode ? (
+                    <button
+                        onClick={() => setIsStealMode(true)}
+                        disabled={!game?.bases?.[game.battingTeam]?.some(onBase => onBase)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-full text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        🏃‍♂️ Steal Bases
+                    </button>
+                ) : (
+                    <div className="flex flex-col items-center">
+                        <button
+                            onClick={confirmSteal}
+                            disabled={selectedRunnersForSteal.length === 0}
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-full text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-2"
+                        >
+                            Confirm Steal ({selectedRunnersForSteal.length})
+                        </button>
+                        <button
+                            onClick={() => { setIsStealMode(false); setSelectedRunnersForSteal([]); }}
+                            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
                 {/* Player Cards Side by Side with Roll Results */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   {/* Pitcher Card and Roll */}
@@ -679,13 +847,19 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
                     { x: 60, y: 160 },  // Third Base
                   ];
                   return onBase ? (
-                    <circle 
-                      key={index}
-                      cx={baseCoords[index].x} 
-                      cy={baseCoords[index].y} 
-                      r="15" 
-                      fill={game.battingTeam === 'home' ? '#FF2305' : '#2344FF'} 
-                    />
+                      <circle 
+                          key={index}
+                          cx={baseCoords[index].x} 
+                          cy={baseCoords[index].y} 
+                          r="15" 
+                          fill={game.battingTeam === 'home' ? '#FF2305' : '#2344FF'} 
+                          className={`cursor-pointer transition-transform duration-200 ${
+                              isStealMode ? ' hover:stroke-yellow-400 hover:stroke-2' : ''
+                          } ${
+                              selectedRunnersForSteal.includes(index) ? 'stroke-yellow-400 stroke-2' : ''
+                          }`}
+                          onClick={() => handleRunnerSelection(index)}
+                      />
                   ) : null
                 })}
 
@@ -704,16 +878,24 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
             <div className="flex justify-center items-center gap-4 mt-6">
                 {/* On-Deck Batter Tile */}
                 {onDeckBatter && (
-                    <div className={`h-24 p-2 rounded-xl shadow-inner border-2 ${onDeckBatter.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} text-center transition-all duration-500`}>
-                        <h4 className="font-bold text-sm mb-1 text-white">On Deck</h4>
-                        <p className="text-lg font-semibold text-yellow-300">
+                    <div className={`p-2 rounded-xl shadow-inner border-2 ${onDeckBatter.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} text-center transition-all duration-500`}>
+                        <h4 className="font-bold text-sm mb-1 text-blue-400">On Deck</h4>
+                        <p className="text-lg font-semibold text-white">
                             {onDeckBatter.name}
                         </p>
+                        <div className="flex justify-between items-center text-xs mt-2">
+                            <span className="font-semibold text-gray-400">On-Base:</span>
+                            <span className="font-bold text-green-400">{onDeckBatter.stats.ob}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs mt-2">
+                            <span className="font-semibold text-gray-400">Hand:</span>
+                            <span className="font-bold text-green-400">{onDeckBatter.handedness}</span>
+                        </div>
                     </div>
                 )}
                 {/* Infield Fielding Sum */}
-                <div className="bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-700 text-center">
-                    <h4 className="font-bold text-lg text-yellow-300">Infield Fielding Sum</h4>
+                <div className="bg-gray-800 h-24 p-2 rounded-xl border-2 border-green-500 text-center transition-all duration-500">
+                    <h4 className="font-bold text-sm mb-1 text-blue-400">Infield Fielding Sum</h4>
                     <p className="text-2xl font-extrabold text-white mt-2">{totalInfieldFielding}</p>
                 </div>
             </div>
