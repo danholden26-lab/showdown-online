@@ -117,15 +117,41 @@ const App = () => {
   // Determine the current pitcher and batter based on game state
   //const battingTeam = game.battingTeam;
 
-  // Determine which pitcher list to show in the modal
-  //const currentPitchingTeamData = battingTeam === 'home' 
-  //  ? cardData.awayTeam
-  //  : cardData.homeTeam;
+  // New version of the advanceToNextAtBat function
   const advanceToNextAtBat = () => {
     if (!game) return;
 
+    const battingTeam = game.battingTeam;
+    const fieldingTeam = battingTeam === 'home' ? 'away' : 'home';
+    const updatedHomeBatters = [...game.homeTeamBatters];
+    const updatedAwayBatters = [...game.awayTeamBatters];
+
+    let nextBatterIndex = game.currentBatterIndex;
+    let nextBattingTeam = battingTeam;
+    let nextInning = game.inning;
+    let newOuts = game.outs;
+    
+    // Logic to handle end of inning
+    if (game.outs >= 3) {
+      newOuts = 0;
+      nextBatterIndex = 0;
+      nextBattingTeam = fieldingTeam;
+      nextInning = game.inning % 1 === 0 ? game.inning + 0.5 : game.inning + 0.5;
+    } else {
+      // Normal batter progression
+      nextBatterIndex++;
+      const currentBatters = battingTeam === 'home' ? updatedHomeBatters : updatedAwayBatters;
+      if (nextBatterIndex >= currentBatters.length) {
+        nextBatterIndex = 0;
+      }
+    }
+
     setGame(prev => ({
       ...prev,
+      outs: newOuts,
+      inning: nextInning,
+      currentBatterIndex: nextBatterIndex,
+      battingTeam: nextBattingTeam,
       atBatPhase: 'firstRoll',
       lastRoll1: null,
       lastRoll2: null,
@@ -152,9 +178,6 @@ const rollForAtBatResult = () => {
     let newOuts = game.outs;
     let newScore = { ...game.score };
     let newBases = { ...game.bases };
-    let newBatterIndex = game.currentBatterIndex;
-    let nextBattingTeam = battingTeam;
-    let nextInning = game.inning;
 
     let updatedHomePitcher = { ...game.homeTeamPitcher };
     let updatedAwayPitcher = { ...game.awayTeamPitcher };
@@ -228,21 +251,6 @@ const rollForAtBatResult = () => {
       }
     }
 
-    // --- NEW: BATTER PROGRESSION AND INNING CHANGE LOGIC HERE ---
-    // This logic now runs after every at-bat, hit, walk, or out
-    if (newOuts >= 3) {
-      logMessage += ` Inning over! The ${battingTeam} team is done batting.`;
-      newOuts = 0;
-      newBases[battingTeam] = [false, false, false];
-      newBatterIndex = 0;
-      nextBattingTeam = fieldingTeam;
-      nextInning = game.inning % 1 === 0 ? game.inning + 0.5 : game.inning + 0.5;
-    } else {
-      newBatterIndex++;
-      if (newBatterIndex >= (battingTeam === 'home' ? updatedHomeBatters.length : updatedAwayBatters.length)) {
-        newBatterIndex = 0;
-      }
-    }
     
     // Final state update
     setGame(prevGame => ({
@@ -250,9 +258,6 @@ const rollForAtBatResult = () => {
       outs: newOuts,
       score: newScore,
       bases: newBases,
-      battingTeam: nextBattingTeam,
-      inning: nextInning,
-      currentBatterIndex: newBatterIndex,
       atBatPhase: 'completed',
       lastRoll2: roll2,
       lastResult: result.text,
@@ -367,7 +372,23 @@ const rollForAtBatResult = () => {
 
   // Sum their fielding values
   const totalInfieldFielding = infielders.reduce((sum, player) => sum + player.fielding, 0);
+  
+  // Place this code block in your App component's main render logic,
+  // right after you define the `currentBatter` variable.
 
+  // Determine the team currently batting
+  const currentBattersInLineup = battingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
+
+  // Calculate the index of the next batter
+  let nextBatterIndex = game.currentBatterIndex + 1;
+
+  // Loop back to the start of the lineup if at the end
+  if (nextBatterIndex >= currentBattersInLineup.length) {
+      nextBatterIndex = 0;
+  }
+
+// Get the on-deck batter object
+const onDeckBatter = currentBattersInLineup[nextBatterIndex];
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-4 flex flex-col items-center">
@@ -691,6 +712,19 @@ const rollForAtBatResult = () => {
                 {game.lastResult ? `Last Play: ${game.lastResult}` : 'Game in Progress'}
               </div>
             </div>
+            {/* On Deck Batter */}
+            <div className="text-center mt-2">
+              <div className="text-md font-bold text-blue-400">
+                <h3 className="text-md font-bold mb-4">On Deck Batter</h3>
+              </div>
+            </div>
+              {/* Add this JSX tile somewhere near the current batter's card */}
+              <div className={`h-24 p-2 rounded-xl shadow-inner border-2 ${onDeckBatter?.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} text-left mb-3 transition-all duration-500`}>
+                  <h4 className={`text-sm font-bold mb-2`}>{onDeckBatter?.name}</h4>
+                  <span className="font-semibold text-gray-400">On-Base:</span>
+                  <span className="font-bold text-green-400">{currentBatter.stats.ob}</span>
+              </div>
+              
           </div>
         </div>
         
