@@ -113,6 +113,7 @@ const App = () => {
   const handleSubstitutePitcher = () => {
     setIsModalOpen(true);
   };
+
   // Determine the current pitcher and batter based on game state
   //const battingTeam = game.battingTeam;
 
@@ -133,73 +134,42 @@ const App = () => {
     }));
   };
 
-  const rollForAtBatResult = () => {
-    if (!game) return;
-    
-    const battingTeam = game.battingTeam;
-    const fieldingTeam = battingTeam === 'home' ? 'away' : 'home';
-    let currentBatter = battingTeam === 'home' 
-      ? game.homeTeamBatters[game.currentBatterIndex]
-      : game.awayTeamBatters[game.currentBatterIndex];
-    let currentPitcher = battingTeam === 'home' ? game.awayTeamPitcher : game.homeTeamPitcher;
+const rollForAtBatResult = () => {
+  if (!game) return;
+  
+  const battingTeam = game.battingTeam;
+  const fieldingTeam = battingTeam === 'home' ? 'away' : 'home';
+  const currentBatter = battingTeam === 'home' 
+    ? game.homeTeamBatters[game.currentBatterIndex]
+    : game.awayTeamBatters[game.currentBatterIndex];
+  const currentPitcher = battingTeam === 'home' ? game.awayTeamPitcher : game.homeTeamPitcher;
 
-    const cardToUse = game.currentAdvantage === 'pitcher' ? currentPitcher : currentBatter;
-    const roll2 = Math.floor(Math.random() * 20) + 1;
-    const result = getAtBatResult(roll2, cardToUse);
-    let logMessage = `${currentBatter.name} rolls a ${roll2} against ${cardToUse.name}'s card (${game.currentAdvantage}'s advantage). Result: ${result.text}`;
-    
-    let newOuts = game.outs;
-    let newScore = { ...game.score };
-    let newBases = { ...game.bases };
-    let newBatterIndex = game.currentBatterIndex;
-    let nextBattingTeam = battingTeam;
-    let nextInning = game.inning;
-    
-    if (result.type === 'out' || result.type === 'strikeout') {
-      newOuts++;
-    } else {
-      const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], result);
-      newBases[battingTeam] = updatedBases;
-      newScore[battingTeam] += runs;
-    }
-    
-    const updatedTeamBatters = battingTeam === 'home' ? [...game.homeTeamBatters] : [...game.awayTeamBatters];
-    let updatedTeamPitcher = fieldingTeam === 'home' ? { ...game.homeTeamPitcher } : { ...game.awayTeamPitcher };
-    // Create copies of the player objects to be potentially updated
-    let updatedHomePitcher = { ...game.homeTeamPitcher };
-    let updatedAwayPitcher = { ...game.awayTeamPitcher };
-    let updatedHomeBatters = [...game.homeTeamBatters];
-    let updatedAwayBatters = [...game.awayTeamBatters];
+  const cardToUse = game.currentAdvantage === 'pitcher' ? currentPitcher : currentBatter;
+  const roll2 = Math.floor(Math.random() * 20) + 1;
+  const result = getAtBatResult(roll2, cardToUse);
+  let logMessage = `${currentBatter.name} rolls a ${roll2} against ${cardToUse.name}'s card (${game.currentAdvantage}'s advantage). Result: ${result.text}`;
+  
+  let newOuts = game.outs;
+  let newScore = { ...game.score };
+  let newBases = { ...game.bases };
+  let newBatterIndex = game.currentBatterIndex;
+  let nextBattingTeam = battingTeam;
+  let nextInning = game.inning;
 
-    // Add sticker logic
-    if (result.sticker) {
-      if (game.currentAdvantage === 'batter') {
-        const updatedBatter = {
-          ...currentBatter,
-          stickers: [...(currentBatter.stickers || []), result.sticker]
-        };
-        // Update the correct batter in the batters array
-        if (battingTeam === 'home') {
-          updatedHomeBatters[game.currentBatterIndex] = updatedBatter;
-        } else {
-          updatedAwayBatters[game.currentBatterIndex] = updatedBatter;
-        }
-      } else {
-        // Update the correct pitcher
-        if (battingTeam === 'home') {
-          updatedAwayPitcher = {
-            ...currentPitcher,
-            stickers: [...(currentPitcher.stickers || []), result.sticker]
-          };
-        } else {
-          updatedHomePitcher = {
-            ...currentPitcher,
-            stickers: [...(currentPitcher.stickers || []), result.sticker]
-          };
-        }
-      }
-    }
-    
+  let updatedHomePitcher = { ...game.homeTeamPitcher };
+  let updatedAwayPitcher = { ...game.awayTeamPitcher };
+  let updatedHomeBatters = [...game.homeTeamBatters];
+  let updatedAwayBatters = [...game.awayTeamBatters];
+
+  // Logic to handle out increments correctly
+  const handleOuts = (outCount) => {
+    newOuts += outCount;
+    const pitcherToUpdate = fieldingTeam === 'home' ? updatedHomePitcher : updatedAwayPitcher;
+    pitcherToUpdate.stats.outsRecorded += outCount;
+    // This is the conversion logic to display IP correctly
+      const fullInnings = Math.floor(pitcherToUpdate.stats.outsRecorded / 3);
+      const remainingOuts = pitcherToUpdate.stats.outsRecorded % 3;
+      pitcherToUpdate.stats.currentIP = fullInnings + (remainingOuts / 10);
     if (newOuts >= 3) {
       logMessage += ` Inning over! The ${battingTeam} team is done batting.`;
       newOuts = 0;
@@ -209,54 +179,85 @@ const App = () => {
       nextInning = game.inning % 1 === 0 ? game.inning + 0.5 : game.inning + 0.5;
     } else {
       newBatterIndex++;
-      if (newBatterIndex >= updatedTeamBatters.length) {
+      if (newBatterIndex >= (battingTeam === 'home' ? updatedHomeBatters.length : updatedAwayBatters.length)) {
         newBatterIndex = 0;
       }
     }
-
-    const updateData = { 
-      ...game,
-      outs: newOuts, 
-      score: newScore,
-      bases: newBases,
-      battingTeam: nextBattingTeam,
-      inning: nextInning,
-      currentBatterIndex: newBatterIndex,
-      atBatPhase: 'completed',
-      lastRoll2: roll2,
-      lastResult: result.text,
-      gameLog: [...game.gameLog, logMessage]
-    };
-
-    if (battingTeam === 'home') {
-      updateData.homeTeamBatters = updatedTeamBatters;
-      updateData.awayTeamPitcher = updatedTeamPitcher;
-    } else {
-      updateData.awayTeamBatters = updatedTeamBatters;
-      updateData.homeTeamPitcher = updatedTeamPitcher;
-    }
-    
-    // Consolidate all updates into a single setGame call
-    setGame(prevGame => ({
-      ...prevGame,
-      outs: newOuts,
-      score: newScore,
-      bases: newBases,
-      battingTeam: nextBattingTeam,
-      inning: nextInning,
-      currentBatterIndex: newBatterIndex,
-      atBatPhase: 'completed',
-      lastRoll2: roll2,
-      lastResult: result.text,
-      gameLog: [...prevGame.gameLog, logMessage],
-      
-      // Update the state with the new player objects
-      homeTeamPitcher: updatedHomePitcher,
-      awayTeamPitcher: updatedAwayPitcher,
-      homeTeamBatters: updatedHomeBatters,
-      awayTeamBatters: updatedAwayBatters,
-    }));
   };
+
+  if (result.text.includes('(GB)') && game.bases[battingTeam][0] && newOuts < 2) {
+    // ... (Your existing double play logic) ...
+    const fieldingTeamBatters = fieldingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
+    const infielders = fieldingTeamBatters.filter(player => player.position?.some(p => ['1B', '2B', 'SS', '3B'].includes(p)));
+    const totalInfieldFielding = infielders.reduce((sum, player) => sum + (player.fielding || 0), 0);
+    const fieldingRoll = Math.floor(Math.random() * 20) + 1;
+    const totalFieldingAttempt = fieldingRoll + totalInfieldFielding;
+    const batterSpeed = currentBatter.stats?.speed || currentBatter.speed || 15;
+
+    if (totalFieldingAttempt > batterSpeed) {
+      handleOuts(2); // Two outs for a successful double play
+      logMessage += ` DOUBLE PLAY! Fielding roll: ${fieldingRoll} + Infield fielding: ${totalInfieldFielding} = ${totalFieldingAttempt}. The batter and runner on first are out!`;
+      
+      const basesAfterDP = [false, false, false];
+      let runsScored = 0;
+      if (game.bases[battingTeam][2]) runsScored++;
+      if (game.bases[battingTeam][1]) basesAfterDP[2] = true;
+      newBases[battingTeam] = basesAfterDP;
+      newScore[battingTeam] += runsScored;
+
+    } else {
+      handleOuts(1); // One out for a failed double play
+      const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], {type: 'single', text: 'Single'});
+      newBases[battingTeam] = updatedBases;
+      newScore[battingTeam] += runs;
+      logMessage += ` Fielding roll: ${fieldingRoll} + Infield fielding: ${totalInfieldFielding} = ${totalFieldingAttempt}. Batter beats the throw! A single is recorded.`;
+    }
+  } else if (result.type === 'out' || result.type === 'strikeout') {
+    handleOuts(1); // One out for a normal out
+  } else {
+    const { bases: updatedBases, score: runs } = updateBases(game.bases[battingTeam], result);
+    newBases[battingTeam] = updatedBases;
+    newScore[battingTeam] += runs;
+  }
+  
+  if (result.sticker) {
+    const updatedPlayer = {
+      ...(game.currentAdvantage === 'batter' ? currentBatter : currentPitcher),
+      stickers: [...((game.currentAdvantage === 'batter' ? currentBatter : currentPitcher).stickers || []), result.sticker]
+    };
+    if (game.currentAdvantage === 'batter') {
+      if (battingTeam === 'home') {
+        updatedHomeBatters[game.currentBatterIndex] = updatedPlayer;
+      } else {
+        updatedAwayBatters[game.currentBatterIndex] = updatedPlayer;
+      }
+    } else {
+      if (battingTeam === 'home') {
+        updatedAwayPitcher = updatedPlayer;
+      } else {
+        updatedHomePitcher = updatedPlayer;
+      }
+    }
+  }
+
+  setGame(prevGame => ({
+    ...prevGame,
+    outs: newOuts,
+    score: newScore,
+    bases: newBases,
+    battingTeam: nextBattingTeam,
+    inning: nextInning,
+    currentBatterIndex: newBatterIndex,
+    atBatPhase: 'completed',
+    lastRoll2: roll2,
+    lastResult: result.text,
+    gameLog: [...prevGame.gameLog, logMessage],
+    homeTeamPitcher: updatedHomePitcher,
+    awayTeamPitcher: updatedAwayPitcher,
+    homeTeamBatters: updatedHomeBatters,
+    awayTeamBatters: updatedAwayBatters,
+  }));
+};
 
   const getAtBatResult = (roll, card) => {
     for (const entry of card.chart) {
@@ -450,9 +451,9 @@ const App = () => {
                     <div className={`h-60 p-3 rounded-xl shadow-inner border-2 ${currentPitcher.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} ${
                       game.lastAdvantage === 'pitcher' ? 'bg-green-900/40 border-green-400' : ''
                     } text-left mb-3 transition-all duration-500`}>
-                      <h4 className={`text-lg font-bold mb-2 ${
+                      <h4 className={`text-md font-bold mb-2 ${
                         game.lastAdvantage === 'pitcher' ? 'text-green-300' : ''
-                      }`}>{currentPitcher.name} (P)</h4>
+                      }`}>{currentPitcher.name}</h4>
                       <div className="flex justify-between items-center text-sm mb-2">
                         <span className="font-semibold text-gray-400">Control:</span>
                         <span className="font-bold text-yellow-300">{currentPitcher.stats.control}</span>
@@ -460,7 +461,9 @@ const App = () => {
                       {/* Add this new section for Innings Pitched */}
                       <div className="flex justify-between items-center text-sm mb-2">
                         <span className="font-semibold text-gray-400">IP:</span>
-                        <span className="font-bold text-yellow-300">{currentPitcher.stats.ip}</span>
+                        <span className={`font-bold ${currentPitcher.stats.currentIP >= currentPitcher.stats.ip ? 'text-red-400' : 'text-blue-300'}`}>
+                          {currentPitcher.stats.currentIP.toFixed(1) || 0} / {currentPitcher.stats.ip || 'N/A'}
+                        </span>
                       </div>
                       <div className="border-t border-gray-700 my-2"></div>
                       <div className="overflow-y-auto max-h-32">
@@ -505,23 +508,24 @@ const App = () => {
                     <div className={`h-60 p-3 rounded-xl shadow-inner border-2 ${currentBatter.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} ${
                       game.lastAdvantage === 'batter' ? 'bg-red-900/40 border-red-400' : ''
                     } text-left mb-3 transition-all duration-500`}>
-                      <h4 className={`text-lg font-bold mb-2 ${
+                      <h4 className={`text-md font-bold mb-2 ${
                         game.lastAdvantage === 'batter' ? 'text-red-300' : ''
-                      }`}>{currentBatter.name} (B)</h4>
-                      <div className="flex justify-between items-center text-sm mb-2">
+                      }`}>{currentBatter.name}</h4>
+                      <div className="flex justify-between items-center text-xs mb-2">
                         <span className="font-semibold text-gray-400">On-Base:</span>
                         <span className="font-bold text-green-400">{currentBatter.stats.ob}</span>
                         <span className="font-semibold text-gray-400">Power:</span>
                         <span className="font-bold text-red-400">{currentBatter.stats.pwr}</span>
                       </div>
+                      <div className="flex justify-between items-center text-xs mb-2">
+                        <span className="font-semibold text-gray-400">Speed:</span>
+                        <span className="font-bold text-red-400">{currentBatter.stats.speed}</span>
+                      </div>
+
                       {/* NEW: Add position and fielding fields */}
-                      <div className="flex justify-between items-center text-sm mb-2">
+                      <div className="flex justify-between items-center text-xs mb-2">
                         <span className="font-semibold text-gray-400">Position(s):</span>
                         <span className="font-bold text-yellow-300">{currentBatter.position.join(', ')}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm mb-2">
-                        <span className="font-semibold text-gray-400">Fielding:</span>
-                        <span className="font-bold text-yellow-300">{currentBatter.fielding}</span>
                       </div>
                       <div className="border-t border-gray-700 my-2"></div>
                       <div className="overflow-y-auto max-h-32">
