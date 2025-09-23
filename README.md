@@ -68,3 +68,48 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+💡 Suggestions / Notes Feature
+
+We’ve added a simple Notes section inside the app so testers can leave feedback while playing.
+
+How it Works
+
+Anyone signed in (including anonymous login) can add a note.
+
+Notes appear instantly for everyone — no refresh needed.
+
+Notes cannot be deleted/edited (kept lightweight for now).
+
+How to Use
+
+Run the app locally or visit the deployed link.
+
+Scroll down to the 💡 Suggestions & Notes section.
+
+Type your feedback (ideas, bugs, improvements, card suggestions).
+
+Click Add — your note is saved and appears in the list.
+
+Example
+💡 Suggestions & Notes
+----------------------
+
+[ input box here ]
+[ Add button ]
+
+📌 Notes:
+- "Pitchers should have stamina rules"
+- "We need a left-handed batter card"
+
+Developer Notes
+
+Notes are stored in Firestore in the notes collection.
+
+Each note contains:
+
+text → the suggestion text
+
+createdAt → timestamp of creation
+
+userId → Firebase user ID (or "anon")
