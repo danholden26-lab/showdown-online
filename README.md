@@ -26,3 +26,9 @@ cd mlb-showdown
 ```
 npm install
 ```
+
+### 3. Firebase Setup
+- Go to Firebase Console
+- Create a project.
+- Enable:
+-   Authentication
