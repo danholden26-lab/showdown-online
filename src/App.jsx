@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { auth } from "./firebase";
-import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import "./index.css";
 import cardData from './cardData.json';
+import Notes from "./notes";
+import Login from "./Login";
+import { signOut } from "firebase/auth"; // <--- Add this import
+
 
 const appId = "local-dev";
 const initialAuthToken = null;
@@ -10,7 +14,7 @@ const initialAuthToken = null;
 const App = () => {
   const [game, setGame] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [userName, setUserName] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
@@ -18,29 +22,33 @@ const App = () => {
   const [selectedRunnersForSteal, setSelectedRunnersForSteal] = useState([]);
 
 
-  // Auth listener
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUserId(user.uid);
-      } else {
-        const anonymousUser = await signInAnonymously(auth);
-        setUserId(anonymousUser.user.uid);
-      }
-      setIsAuthReady(true);
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+    // Auth listener
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setUserId(user.uid);
+          setUserName(user.displayName); // Add this line
+        } else {
+          setUserId(null);
+          setUserName(null); // Add this line
+        }
+        setIsLoading(false);
+      });
+      return () => unsubscribe();
+    }, []);
 
   const showInfoModal = (msg) => {
     setModalMessage(msg);
     setShowModal(true);
   };
-
+  const capitalizeFirstLetter = (string) => {
+    if (!string) {
+      return '';
+    }
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
   const createSoloGame = () => {
-    if (!isAuthReady || !userId) {
+    if (!userId) {
       showInfoModal("Authentication is not ready. Please wait.");
       return;
     }
@@ -71,6 +79,7 @@ const App = () => {
       lastRoll2: null,
       lastAdvantage: null,
       lastResult: null,
+      lastResulttext: null,
     };
 
     setGame(newGame);
@@ -106,6 +115,7 @@ const App = () => {
       lastRoll1: roll1,
       lastAdvantage: currentAdvantage,
       lastResult: null,
+      lastResulttext: null,
     }));
   };
   
@@ -166,6 +176,7 @@ const advanceToNextAtBat = () => {
         lastRoll2: null,
         lastAdvantage: null,
         lastResult: null,
+        lastResulttext: null,
     }));
 };
 
@@ -188,12 +199,14 @@ const rollForAtBatResult = () => {
     const roll2 = Math.floor(Math.random() * 20) + 1;
     const result = getAtBatResult(roll2, cardToUse);
     let logMessage = `${currentBatter.name} rolls a ${roll2} against ${cardToUse.name}'s card (${game.currentAdvantage}'s advantage). Result: ${result.text}`;
-    
-    // Create a working copy of the bases, correctly
-    let newBases = [...game.bases[game.battingTeam]];
+    const playLogEntry = `${currentBatter.name} rolls a ${roll2} against ${currentPitcher.name}. Result: ${result.text}`;
+
+    // Create a single working copy of the bases
+    let workingBases = [...game.bases[game.battingTeam]];
     let newOuts = game.outs;
     let newScore = { ...game.score };
-
+    let runs = 0; // The runs variable must be declared here.
+        // Declare these variables at the top
     let updatedHomePitcher = { ...game.homeTeamPitcher };
     let updatedAwayPitcher = { ...game.awayTeamPitcher };
     let updatedHomeBatters = [...game.homeTeamBatters];
@@ -212,29 +225,33 @@ const rollForAtBatResult = () => {
     // --- NEW: Steal Attempt Resolution ---
     if (selectedRunnersForSteal.length > 0) {
         const isStrikeout = result.text.includes('(SO)');
-        const isOut = result.text.includes('(PU)') || result.text.includes('(FB)') || result.text.includes('(GB)');
+        const isGroundBall = result.text.includes('(GB)');
+        const isOtherOut = result.text.includes('(PU)') || result.text.includes('(FB)');
         const isHit = result.text.includes('(Single)') || result.text.includes('(Double)') || result.text.includes('(Triple)') || result.text.includes('(HR)');
 
         if (isStrikeout) {
             selectedRunnersForSteal.forEach(baseIndex => {
-                const runner = newBases[baseIndex];
+                const runner = workingBases[baseIndex];
                 const stealRoll = Math.floor(Math.random() * 20) + 1;
 
                 if (stealRoll <= runner.stats.speed) {
                     logMessage += `${runner.name} successfully steals to ${baseIndex + 2}nd base! (Roll: ${stealRoll})`;
-                    newBases[baseIndex] = null;
-                    newBases[baseIndex + 1] = runner;
+                    workingBases[baseIndex] = null;
+                    workingBases[baseIndex + 1] = runner;
                 } else {
                     logMessage += `${runner.name} is caught stealing! (Roll: ${stealRoll})`;
-                    newBases[baseIndex] = null;
+                    workingBases[baseIndex] = null;
                     newOuts++;
                 }
             });
         } 
-        else if (isOut) {
+        else if (isOtherOut) {
             logMessage += `Runners stay put.`;
         }
         else if (isHit) {
+            // No action needed here
+        }
+        else if (isGroundBall) {
             // No action needed here
         }
         setSelectedRunnersForSteal([]);
@@ -256,7 +273,7 @@ const rollForAtBatResult = () => {
         if (game.bases[battingTeam][0] && newOuts < 2) {
             // According to your rule, the runner on first is out automatically.
             handleOuts(1);
-            newBases[0] = null;
+            workingBases[0] = null;
             logMessage += ` The runner on first is out on a ground ball.`;
 
             // Now, roll to see if the batter is also out.
@@ -272,9 +289,11 @@ const rollForAtBatResult = () => {
                 logMessage += ` DOUBLE PLAY! The batter is also out.`;
             } else {
                 logMessage += ` FIELDER'S CHOICE! The batter beats the throw to first and is safe.`;
-                const { bases: updatedBases, score: runs } = updateBases(newBases, { type: 'walk' }, currentBatter);
-                newBases = updatedBases;
+                const { bases: updatedBases, score: newRuns } = updateBases(workingBases, { type: 'walk' }, currentBatter);
+                workingBases = updatedBases;
+                runs = newRuns;
                 newScore[battingTeam] += runs;
+                // --- END OF CORRECTED LINES ---
             }
         } else {
             // If no runner on first, the ground ball is a simple out for the batter.
@@ -282,10 +301,11 @@ const rollForAtBatResult = () => {
         }
     }
     else {
-        // All other results (walks, singles, etc.) update bases
-        const { bases: updatedBases, score: runs } = updateBases(newBases, result, currentBatter);
-        newBases = updatedBases;
-        newScore[battingTeam] += runs;
+        // This is the key line to change
+        const { bases: resultBases, score: resultScore } = updateBases(workingBases, result, currentBatter);
+        workingBases = resultBases;
+        runs = resultScore
+        newScore[battingTeam] += runs;;
     }
     
     if (result.sticker) {
@@ -307,24 +327,46 @@ const rollForAtBatResult = () => {
             }
         }
     }
-    
+      
+
+    // Add sticker logic for other stickers (if it exists)
+    if (result.sticker) {
+        const updatedPlayer = {
+            ...(game.currentAdvantage === 'batter' ? currentBatter : currentPitcher),
+            stickers: [...((game.currentAdvantage === 'batter' ? currentBatter : currentPitcher).stickers || []), result.sticker]
+        };
+        if (game.currentAdvantage === 'batter') {
+            if (battingTeam === 'home') {
+                updatedHomeBatters[game.currentBatterIndex] = updatedPlayer;
+            } else {
+                updatedAwayBatters[game.currentBatterIndex] = updatedPlayer;
+            }
+        } else {
+            if (battingTeam === 'home') {
+                updatedAwayPitcher = updatedPlayer;
+            } else {
+                updatedHomePitcher = updatedPlayer;
+            }
+        }
+    }
     setGame(prevGame => ({
         ...prevGame,
         outs: newOuts,
         score: newScore,
         bases: {
             ...prevGame.bases,
-            [game.battingTeam]: newBases,
+            [game.battingTeam]: workingBases,
         },
         atBatPhase: 'completed',
         lastRoll2: roll2,
-        lastResult: result.text,
+        lastResult: playLogEntry, //result.text,
         gameLog: [...prevGame.gameLog, logMessage],
         homeTeamPitcher: updatedHomePitcher,
         awayTeamPitcher: updatedAwayPitcher,
         homeTeamBatters: updatedHomeBatters,
         awayTeamBatters: updatedAwayBatters,
         effectiveHandedness: effectiveBatterHandedness,
+        lastResulttext: result.text,
     }));
 };
 
@@ -468,69 +510,77 @@ const rollForAtBatResult = () => {
     return { bases: newBases, score };
 };
   
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      setGame(null); // Optional: Reset game state on sign out
+    } catch (err) {
+      console.error("Sign-Out error:", err);
+    }
+  };
 
+  // First, handle loading and login states
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+        <p>Loading authentication...</p>
+      </div>
+    );
   }
 
+  if (!userId) {
+    return <Login />;
+  }
+
+
+// Next, handle the two main states for a logged-in user:
+  // 1. No game has started yet
+  // 2. A game is in progress
   if (!game) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
         <h1 className="text-4xl font-bold mb-4">MLB Showdown</h1>
-        <p className="mb-4">Signed in as: {userId}</p>
+        <p className="mb-4">Signed in as: {userName || userId}</p>
         <p className="mb-8">Test the core mechanics by playing against yourself!</p>
         <button
           onClick={createSoloGame}
-          disabled={!isAuthReady}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
         >
           Start Solo Game
+        </button>
+        <button 
+          onClick={handleSignOut}
+          className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-full text-xs mt-4"
+        >
+          Sign Out
         </button>
       </div>
     );
   }
-  // Now that we've returned early if `game` is null,
-// it is safe to define these variables here.
+  // Only if `game` exists, we can safely define these variables
   const battingTeam = game.battingTeam;
   const currentPitchingTeamData = battingTeam === 'home'
     ? cardData.awayTeam
     : cardData.homeTeam;
-
   const currentBatters = game?.battingTeam === 'home' ? game?.homeTeamBatters : game?.awayTeamBatters;
   const currentBatter = currentBatters?.[game?.currentBatterIndex];
   const currentPitcher = game?.battingTeam === 'home' ? game?.awayTeamPitcher : game?.homeTeamPitcher;
   const isTopInning = game?.battingTeam === 'away';
-
-  // Determine the fielding team
   const fieldingTeam = game.battingTeam === 'home' ? game.awayTeamBatters : game.homeTeamBatters;
-
-  // Filter for infielders (1B, 2B, SS, 3B)
   const infielders = fieldingTeam.filter(player => 
     player.position.includes('1B') || 
     player.position.includes('2B') || 
     player.position.includes('SS') || 
     player.position.includes('3B')
   );
-
-  // Sum their fielding values
   const totalInfieldFielding = infielders.reduce((sum, player) => sum + player.fielding, 0);
-  
-  // Place this code block in your App component's main render logic,
-  // right after you define the `currentBatter` variable.
-
-  // Determine the team currently batting
   const currentBattersInLineup = battingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
-
-  // Calculate the index of the next batter
   let nextBatterIndex = game.currentBatterIndex + 1;
-
-  // Loop back to the start of the lineup if at the end
   if (nextBatterIndex >= currentBattersInLineup.length) {
-      nextBatterIndex = 0;
+    nextBatterIndex = 0;
   }
+  const onDeckBatter = currentBattersInLineup[nextBatterIndex];
 
-// Get the on-deck batter object
-const onDeckBatter = currentBattersInLineup[nextBatterIndex];
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-4 flex flex-col items-center">
@@ -547,6 +597,13 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
           </div>
         </div>
       )}
+      {/* Add the Sign Out button to your game UI */}
+      <button 
+        onClick={handleSignOut}
+        className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-full text-xs self-end mb-4"
+      >
+        Sign Out
+      </button>
       
       <div className="w-full max-w-4xl space-y-8">
         <div className="flex flex-col lg:flex-row lg:space-x-8">
@@ -600,53 +657,61 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
                     </div>
                   )}
                 </div>
-                {/* NEW BUTTON: Substitute */}
-                <div className="flex justify-center mb-4">
-                  <button
-                    onClick={handleSubstitutePitcher}
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors"
-                  >
-                    Substitute Pitcher
-                  </button>
-                </div>
-                {/* New 'Steal' toggle button */}
-                {!isStealMode ? (
+                <div className="grid grid-cols-2 gap-2 mb-1">
+                  {/* NEW BUTTON: Substitute */}
+                  <div className="mb-1 px-1">
                     <button
-                        onClick={() => setIsStealMode(true)}
-                        disabled={!game?.bases?.[game.battingTeam]?.some(onBase => onBase)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-full text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleSubstitutePitcher}
+                      className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors"
                     >
-                        🏃‍♂️ Steal Bases
+                      Substitute Pitcher
                     </button>
-                ) : (
-                    <div className="flex flex-col items-center">
-                        <button
-                            onClick={confirmSteal}
-                            disabled={selectedRunnersForSteal.length === 0}
-                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-full text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-2"
-                        >
-                            Confirm Steal ({selectedRunnersForSteal.length})
-                        </button>
-                        <button
-                            onClick={() => { setIsStealMode(false); setSelectedRunnersForSteal([]); }}
-                            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                )}
+                  </div>
+                  
+                  {/* New 'Steal' toggle button */}
+                  <div className="justify-between mb-1 px-1">
+                  {!isStealMode ? (
+                      <button
+                          onClick={() => setIsStealMode(true)}
+                          disabled={!game?.bases?.[game.battingTeam]?.some(onBase => onBase)}
+                          className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                          🏃‍♂️ Steal Bases
+                      </button>
+                  ) : (
+                      <div className="flex flex-row items-center gap-1">
+                          <button
+                              onClick={confirmSteal}
+                              disabled={selectedRunnersForSteal.length === 0}
+                              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-1 rounded-full text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                              Confirm Steal ({selectedRunnersForSteal.length})
+                          </button>
+                      
+                          <button
+                              onClick={() => { setIsStealMode(false); setSelectedRunnersForSteal([]); }}
+                              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full text-sm transition-colors"
+                          >
+                              X
+                          </button>
+                      </div>
+                  )}
+                  </div>
+                </div>
+           
                 {/* Player Cards Side by Side with Roll Results */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
+                  
                   {/* Pitcher Card and Roll */}
                   <div className={`transition-all duration-500 ${
-                    game.lastAdvantage === 'pitcher' ? 'ring-4 ring-green-400 ring-opacity-75 shadow-lg shadow-green-400/50' : ''
+                    game.lastAdvantage === 'pitcher' ? `ring-4 ring-opacity-75 shadow-lg ${currentPitcher.team === 'home' ? 'ring-red-400 shadow-red-400/50' : 'ring-blue-400 shadow-blue-400/50'}` : ''
                   }`}>
                     {currentPitcher && (
                       <div className={`h-60 p-3 rounded-xl shadow-inner border-2 ${currentPitcher.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} ${
-                        game.lastAdvantage === 'pitcher' ? 'bg-green-900/40 border-green-400' : ''
+                        game.lastAdvantage === 'pitcher' ? `${currentPitcher.team === 'home' ? 'bg-red-900/40 border-red-400' : 'bg-blue-900/40 border-blue-400'}` : ''
                       } text-left mb-3 transition-all duration-500`}>
                         <h4 className={`text-md font-bold mb-2 ${
-                          game.lastAdvantage === 'pitcher' ? 'text-green-300' : ''
+                          game.lastAdvantage === 'pitcher' ? `${currentPitcher.team === 'home' ? 'text-red-300' : 'text-blue-300'}` : ''
                         }`}>{currentPitcher.name}</h4>
                         <div className="flex justify-between items-center text-sm mb-2">
                           <span className="font-semibold text-gray-400">Control:</span>
@@ -681,29 +746,31 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
                     )}
                     
                     {/* Static Pitcher Roll Area */}
-                    <div className={`bg-gray-900 p-3 rounded-lg border-2 border-green-500 text-center transition-all duration-500 ${
-                      game.lastAdvantage === 'pitcher' ? 'ring-2 ring-green-400 bg-green-900/30' : ''
-                    }`}>
-                      <div className="text-sm font-bold text-green-400">PITCHER ROLL</div>
+                    <div className={`
+                        p-3 rounded-lg border-2 text-center transition-all duration-500
+                        ${game.lastAdvantage === 'pitcher' ? `${currentPitcher.team === 'home' ? 'ring-2 ring-red-400 bg-red-900/30' : 'ring-2 ring-blue-400 bg-blue-900/30'}` : ''}
+                        ${currentPitcher.team === 'home' ? 'bg-red-900/20 border-red-600' : 'bg-blue-900/20 border-blue-600'}
+                        `}>
+                      <div className={`text-sm font-bold ${currentPitcher.team === 'home' ? 'text-red-400' : 'text-blue-400'}`}>PITCHER ROLL</div>
                       <div className="text-2xl font-bold text-yellow-400">
                         {game.lastRoll1 || '-'}
                       </div>
                       <div className="text-xs text-gray-300">
-                        {game.lastAdvantage ? `${game.lastAdvantage}'s Advantage` : 'Ready to Roll'}
+                        {game.lastAdvantage ? `${capitalizeFirstLetter(game.lastAdvantage)}'s Advantage` : 'Ready to Roll'}
                       </div>
                     </div>
                   </div>
                   
                   {/* Batter Card and Roll */}
                   <div className={`transition-all duration-500 ${
-                    game.lastAdvantage === 'batter' ? 'ring-4 ring-red-400 ring-opacity-75 shadow-lg shadow-red-400/50' : ''
+                    game.lastAdvantage === 'batter' ? `ring-4 ring-opacity-75 shadow-lg ${currentBatter.team === 'home' ? 'ring-red-400 shadow-red-400/50' : 'ring-blue-400 shadow-blue-400/50'}` : ''
                   }`}>
                     {currentBatter && (
                       <div className={`h-60 p-3 rounded-xl shadow-inner border-2 ${currentBatter.team === 'home' ? 'border-red-600 bg-red-900/20' : 'border-blue-600 bg-blue-900/20'} ${
-                        game.lastAdvantage === 'batter' ? 'bg-red-900/40 border-red-400' : ''
+                        game.lastAdvantage === 'batter' ? `${currentBatter.team === 'home' ? 'bg-red-900/40 border-red-400' : 'bg-blue-900/40 border-blue-400'}` : ''
                       } text-left mb-3 transition-all duration-500`}>
                         <h4 className={`text-md font-bold mb-2 ${
-                          game.lastAdvantage === 'batter' ? 'text-red-300' : ''
+                          game.lastAdvantage === 'batter' ? `${currentBatter.team === 'home' ? 'text-red-300' : 'text-blue-300'}` : ''
                         }`}>{currentBatter.name}</h4>
                         <div className="flex justify-between items-center text-xs mb-2">
                           <span className="font-semibold text-gray-400">On-Base:</span>
@@ -743,15 +810,17 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
                     )}
                     
                     {/* Static Batter Roll Area */}
-                    <div className={`bg-gray-900 p-3 rounded-lg border-2 border-red-500 text-center transition-all duration-500 ${
-                      game.lastAdvantage === 'batter' ? 'ring-2 ring-red-400 bg-red-900/30' : ''
-                    }`}>
-                      <div className="text-sm font-bold text-red-400">BATTER ROLL</div>
+                    <div className={`
+                      p-3 rounded-lg border-2 text-center transition-all duration-500 
+                      ${game.lastAdvantage === 'batter' ? `${currentBatter.team === 'home' ? 'ring-2 ring-red-400 bg-red-900/30' : 'ring-2 ring-blue-400 bg-blue-900/30'}` : ''}
+                      ${currentBatter.team === 'home' ? 'bg-red-900/20 border-red-600' : 'bg-blue-900/20 border-blue-600'}
+                    `}>
+                      <div className={`text-sm font-bold ${currentBatter.team === 'home' ? 'text-red-400' : 'text-blue-400'}`}>BATTER ROLL</div>
                       <div className="text-2xl font-bold text-yellow-400">
                         {game.lastRoll2 || '-'}
                       </div>
                       <div className="text-xs text-gray-300">
-                        {game.lastResult || 'Waiting for Roll'}
+                        {game.lastResulttext ? `${game.lastResulttext}` : 'Ready to Roll'}
                       </div>
                     </div>
                   </div>
@@ -796,7 +865,7 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
                 <h3 className="text-xl font-bold text-white mb-4">Choose a Pitcher</h3>
                 <ul className="space-y-2 max-h-64 overflow-y-auto">
                   {currentPitchingTeamData.pitchers
-                    .filter(p => p.name !== currentPitcher.name) // This line still uses a potentially undefined currentPitcher
+                    .filter(p => p.name !== currentPitcher?.name) 
                     .map((pitcher) => (
                       <li
                         key={pitcher.name}
@@ -916,7 +985,7 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
             ))}
           </div>
         </div>
-
+        <Notes/>
         {/* New Game Button */}
         <div className="text-center">
           <button
@@ -927,8 +996,11 @@ const onDeckBatter = currentBattersInLineup[nextBatterIndex];
           </button>
         </div>
       </div>
-    </div>
+  </div>
+  
   );
 };
+
+
 
 export default App;
