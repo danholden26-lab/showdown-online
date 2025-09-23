@@ -31,4 +31,4 @@ npm install
 - Go to Firebase Console
 - Create a project.
 - Enable:
--   Authentication
+--Authentication
