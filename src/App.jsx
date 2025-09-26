@@ -2,14 +2,28 @@ import React, { useState, useEffect } from "react";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import "./index.css";
-import cardData from './cardData.json';
+//import cardData from './cardData.json';
 import Notes from "./notes";
 import Login from "./Login";
 import { signOut } from "firebase/auth"; // <--- Add this import
 
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebase";
+import { loadTeamFromFirestore } from "./utils/loadTeam";
 
 const appId = "local-dev";
 const initialAuthToken = null;
+
+async function loadUserTeam(userId) {
+  const teamRef = doc(db, `users/${userId}/teams/demoTeam`);
+  const snap = await getDoc(teamRef);
+  if (snap.exists()) {
+    return snap.data();
+  } else {
+    console.log("No team found!");
+    return null;
+  }
+}
 
 const App = () => {
   const [game, setGame] = useState(null);
@@ -47,43 +61,53 @@ const App = () => {
     }
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
-  const createSoloGame = () => {
-    if (!userId) {
-      showInfoModal("Authentication is not ready. Please wait.");
-      return;
-    }
+  const createSoloGame = async () => {
+  if (!userId) {
+    showInfoModal("Authentication is not ready. Please wait.");
+    return;
+  }
 
+  // Load user team from Firestore
+  const userTeam = await loadUserTeam(userId); // or loadTeamFromFirestore("home") if using public teams
+  if (!userTeam) {
+    showInfoModal("No saved team found for this user.");
+    return;
+  }
 
+  // For now, you can treat 'home' as the user's team and 'away' as demo/opponent
+  const homeTeamBatters = userTeam.batters.map(card => ({ ...card, stickers: [] }));
+  const homeTeamPitcher = { ...userTeam.pitchers[0], stickers: [] };
 
-    const homeTeamBatters = cardData.homeTeam.batters.map(card => ({...card, stickers: []}));
-    const homeTeamPitcher = { ...cardData.homeTeam.pitchers[0], stickers: [] }; // First pitcher
-    const awayTeamPitcher = { ...cardData.awayTeam.pitchers[0], stickers: [] }; // First pitcher
-    const awayTeamBatters = cardData.awayTeam.batters.map(card => ({...card, stickers: []}));
+  // Example opponent team (static demo)
+  const demoTeam = await loadTeamFromFirestore("away");
+  const awayTeamBatters = demoTeam.batters.map(card => ({ ...card, stickers: [] }));
+  const awayTeamPitcher = { ...demoTeam.pitchers[0], stickers: [] };
 
-    const newGame = {
-      isSoloGame: true,
-      inning: 1,
-      outs: 0,
-      score: { home: 0, away: 0 },
-      bases: { home: [null, null, null], away: [null, null, null], },
-      gameLog: [`Solo game started. The Away team is batting first. User: ${userId}`],
-      homeTeamBatters: homeTeamBatters,
-      awayTeamBatters: awayTeamBatters,
-      homeTeamPitcher: homeTeamPitcher,
-      awayTeamPitcher: awayTeamPitcher,
-      currentBatterIndex: 0,
-      battingTeam: 'away',
-      status: 'started',
-      atBatPhase: 'firstRoll',
-      lastRoll1: null,
-      lastRoll2: null,
-      lastAdvantage: null,
-      lastResult: null,
-      lastResulttext: null,
-    };
-
-    setGame(newGame);
+  const newGame = {
+    isSoloGame: true,
+    inning: 1,
+    outs: 0,
+    score: { home: 0, away: 0 },
+    bases: { home: [null, null, null], away: [null, null, null] },
+    gameLog: [`Solo game started. The Away team is batting first. User: ${userId}`],
+    homeTeamBatters,
+    awayTeamBatters,
+    homeTeamPitcher,
+    awayTeamPitcher,
+    currentBatterIndex: 0,
+    battingTeam: 'away',
+    status: 'started',
+    atBatPhase: 'firstRoll',
+    lastRoll1: null,
+    lastRoll2: null,
+    lastAdvantage: null,
+    lastResult: null,
+    lastResulttext: null,
   };
+
+  setGame(newGame);
+};
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const rollForAdvantage = () => {
@@ -189,8 +213,8 @@ const rollForAtBatResult = () => {
         ? game.homeTeamBatters[game.currentBatterIndex]
         : game.awayTeamBatters[game.currentBatterIndex];
     const currentPitcher = battingTeam === 'home' ? game.awayTeamPitcher : game.homeTeamPitcher;
-    const teamRoster = battingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
-
+    //const teamRoster = battingTeam === 'home' ? game.homeTeamBatters : game.awayTeamBatters;
+    
     const effectiveBatterHandedness = currentBatter.handedness === 'switch'
         ? (currentPitcher.handedness === 'right' ? 'left' : 'right')
         : currentBatter.handedness;
@@ -211,6 +235,23 @@ const rollForAtBatResult = () => {
     let updatedAwayPitcher = { ...game.awayTeamPitcher };
     let updatedHomeBatters = [...game.homeTeamBatters];
     let updatedAwayBatters = [...game.awayTeamBatters];
+    
+        // Create the lastPlay object here
+    const lastPlay = {
+        // Basic at-bat result
+        batterOutcome: result,
+        roll: roll2,
+        cardUsed: cardToUse,
+        
+        // Runner movements
+        runners: [], // Populate this array based on what happens below
+        
+        // Fielding attempts
+        fieldingAttempt: null, // Populate this based on the double play check
+        
+        // Runs scored
+        runsScored: 0,
+    };
 
     const handleOuts = (outCount) => {
         newOuts += outCount;
@@ -235,13 +276,27 @@ const rollForAtBatResult = () => {
                 const stealRoll = Math.floor(Math.random() * 20) + 1;
 
                 if (stealRoll <= runner.stats.speed) {
-                    logMessage += `${runner.name} successfully steals to ${baseIndex + 2}nd base! (Roll: ${stealRoll})`;
-                    workingBases[baseIndex] = null;
-                    workingBases[baseIndex + 1] = runner;
+                  lastPlay.runners.push({
+                    name:runner.name,
+                    startbase:getBaseName(baseIndex),
+                    endBase: getBaseName(baseIndex + 1),
+                    outcome: 'safe',
+                    event: 'steal',
+                  })
+                  //logMessage += `${runner.name} successfully steals to ${baseIndex + 2}nd base! (Roll: ${stealRoll})`;
+                  workingBases[baseIndex] = null;
+                  workingBases[baseIndex + 1] = runner;
+
                 } else {
-                    logMessage += `${runner.name} is caught stealing! (Roll: ${stealRoll})`;
-                    workingBases[baseIndex] = null;
-                    newOuts++;
+                  lastPlay.runners.push({
+                    name: runner.name,
+                    startBase: getBaseName(baseIndex),
+                    outcome: 'out',
+                    event: 'caughtStealing',
+                  });
+                    //logMessage += `${runner.name} is caught stealing! (Roll: ${stealRoll})`;
+                  workingBases[baseIndex] = null;
+                  newOuts++;
                 }
             });
         } 
@@ -272,6 +327,7 @@ const rollForAtBatResult = () => {
         // Ground ball logic with or without a runner on first
         if (game.bases[battingTeam][0] && newOuts < 2) {
             // According to your rule, the runner on first is out automatically.
+            const runnerOnFirst = workingBases[0];
             handleOuts(1);
             workingBases[0] = null;
             logMessage += ` The runner on first is out on a ground ball.`;
@@ -283,17 +339,49 @@ const rollForAtBatResult = () => {
             const fieldingRoll = Math.floor(Math.random() * 20) + 1;
             const totalFieldingAttempt = fieldingRoll + totalInfieldFielding;
             const batterSpeed = currentBatter.stats?.speed || 15;
+            //const runner = workingBases[baseIndex];
 
             if (totalFieldingAttempt > batterSpeed) {
-                handleOuts(1);
+                
+                lastPlay.fieldingAttempt = {
+                  type: 'doublePlay',
+                  successful: true,
+                  roll: fieldingRoll,
+                };
+                lastPlay.runners.push({ 
+                    name: runnerOnFirst.name,
+                    startBase: getBaseName(0),
+                    endBase: getBaseName(1),
+                    outcome: 'out',
+                  });
+                lastPlay.runsScored = 0; 
                 logMessage += ` DOUBLE PLAY! The batter is also out.`;
+                handleOuts(1);
             } else {
+                lastPlay.fieldingAttempt = {
+                  type: 'doublePlay',
+                  successful: false,
+                }
+                // Push the runner out at 2nd to lastPlay.runners
+                lastPlay.runners.push({
+                    name: runnerOnFirst.name,
+                    startBase: getBaseName(0),
+                    endBase: getBaseName(1),
+                    outcome: 'out',
+                });
+
                 logMessage += ` FIELDER'S CHOICE! The batter beats the throw to first and is safe.`;
                 const { bases: updatedBases, score: newRuns } = updateBases(workingBases, { type: 'walk' }, currentBatter);
                 workingBases = updatedBases;
                 runs = newRuns;
                 newScore[battingTeam] += runs;
-                // --- END OF CORRECTED LINES ---
+                        // Push the batter as a runner on first
+                lastPlay.runners.push({
+                    name: currentBatter.name,
+                    startBase: 3, // Assuming this means a new runner
+                    endBase: 0,
+                    outcome: 'safe'
+                });
             }
         } else {
             // If no runner on first, the ground ball is a simple out for the batter.
@@ -349,6 +437,12 @@ const rollForAtBatResult = () => {
             }
         }
     }
+    
+    // Call the pure function and get its results
+  const { bases: updatedBases, score: runsScored } = updateBases(workingBases, result, currentBatter);
+  
+
+
     setGame(prevGame => ({
         ...prevGame,
         outs: newOuts,
@@ -367,8 +461,39 @@ const rollForAtBatResult = () => {
         awayTeamBatters: updatedAwayBatters,
         effectiveHandedness: effectiveBatterHandedness,
         lastResulttext: result.text,
+        lastPlay: lastPlay,
     }));
 };
+
+// Helper to convert base index to a string
+const getBaseName = (index) => {
+    switch (index) {
+        case 0: return 'first';
+        case 1: return 'second';
+        case 2: return 'third';
+        case 3: return 'home'; // For runners who score
+        default: return '';
+    }
+};
+
+    const getRunnerDetails = (runners) => {
+      if (!runners || runners.length === 0) {
+        return ""; // Return an empty string if there are no runners to report on
+      }
+
+      const details = runners.map(runner => {
+        if (runner.event === 'steal') {
+          return `${runner.name} successfully steals ${runner.endBase}!`;
+        }
+        if (runner.outcome === 'out') {
+          return `${runner.name} is out at ${runner.endBase}!`;
+        }
+        // Add more conditions for other runner outcomes (e.g., scored, safe)
+        return "";
+      });
+
+      return details.join(" "); // Join all runner outcomes into a single string
+    };
 
   const getAtBatResult = (roll, card) => {
     for (const entry of card.chart) {
@@ -389,56 +514,13 @@ const rollForAtBatResult = () => {
               : [...prev, baseIndex]
       );
   };
+
   // This function is called by the new "Confirm Steal" button
   const confirmSteal = () => {
-      // We are no longer resolving the steal here.
-      // Instead, we just reset the UI and prepare the game state.
       setIsStealMode(false);
-      
       // The runners have now been "flagged" for a steal attempt.
-      // The resolution happens in the next roll.
   };
-  const attemptSteal = () => {
-      const battingTeam = game.battingTeam;
-      const newBases = [...game.bases[game.battingTeam]];
-      const newGameLog = [...game.gameLog];
-      const newOuts = game.outs;
 
-      selectedRunnersForSteal.forEach(baseIndex => {
-          // You'll need to find the correct runner here
-          // The previous simple logic of `game.currentBatterIndex - 1` won't work for multiple runners.
-          // A better approach would be to track which player is on which base in your state.
-
-          // Placeholder for a simple example
-          const stealRoll = Math.floor(Math.random() * 20) + 1;
-          const runnerSpeed = 10; // Placeholder for a real stat lookup
-
-          if (stealRoll <= runnerSpeed) {
-              // Success
-              newGameLog.push(`Runner from ${baseIndex + 1}st/nd/rd base successfully steals! (Roll: ${stealRoll})`);
-              // Logic to move the runner from baseIndex to baseIndex + 1
-          } else {
-              // Caught Stealing
-              newGameLog.push(`Runner from ${baseIndex + 1}st/nd/rd base is caught stealing! (Roll: ${stealRoll})`);
-              // Logic to remove the runner and add an out
-          }
-      });
-
-      // Reset UI and state after the attempt
-      setIsStealMode(false);
-      setSelectedRunnersForSteal([]);
-
-      setGame(prevGame => ({
-          ...prevGame,
-          bases: {
-              ...prevGame.bases,
-              [game.battingTeam]: newBases,
-          },
-          outs: newOuts,
-          gameLog: newGameLog,
-      }));
-  };
-  
   const updateBases = (currentBases, result, currentBatter) => {
     let newBases = [...currentBases]; 
     let score = 0;
@@ -510,6 +592,42 @@ const rollForAtBatResult = () => {
     return { bases: newBases, score };
 };
   
+const getPlayDetails = (lastPlay) => {
+  if (!lastPlay) {
+    return null;
+  }
+
+  const { type, batterOutcome, runners, fieldingAttempt } = lastPlay;
+  let details = [];
+
+  // Add the main play result
+  details.push(`Result: ${batterOutcome.name}`);
+{/*
+  // Check for fielding attempts (e.g., double play)
+  if (fieldingAttempt && fieldingAttempt.type === 'doublePlay' && fieldingAttempt.successful) {
+    details.push('Fielding team succeeded with a double play.');
+  }
+
+  // Check for runners that moved or scored
+  if (runners && runners.length > 0) {
+    runners.forEach(runner => {
+      if (runner.outcome === 'out') {
+        details.push(`Runner on ${runner.startBase} was out at ${runner.endBase}.`);
+      } else if (runner.outcome === 'scored') {
+        details.push(`Runner on ${runner.startBase} scored!`);
+      } else if (runner.outcome === 'safe') {
+        details.push(`Runner on ${runner.startBase} is safe at ${runner.endBase}.`);
+      }
+    });
+  }
+*/}
+  // Combine details into a single string or an array of strings
+  return details.join(' ');
+};
+
+  //handle in-game stats
+
+
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -610,34 +728,7 @@ const rollForAtBatResult = () => {
           {/* Left Column: Scoreboard & Game Info */}
           <div className="flex-1 flex flex-col">
             
-            {/* Compact Scoreboard Bug - Upper Left */}
-            <div className="bg-gray-900 p-2 rounded-lg shadow-lg border border-gray-700 w-36 mb-6">
-              <div className="text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-blue-400 font-bold">Away</span>
-                  <span className="text-white font-bold">{game.score.away}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-red-400 font-bold">Home</span>
-                  <span className="text-white font-bold">{game.score.home}</span>
-                </div>
-                <div className="border-t border-gray-700 pt-1">
-                  <div className="flex justify-between items-center">
-                    <span className={`font-bold text-xs ${isTopInning ? 'text-blue-400' : 'text-red-400'}`}>
-                      {isTopInning ? 'Top' : 'Bot'} {Math.floor(game.inning)}
-                    </span>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-400 text-xs">Outs</span>
-                      <div className="flex space-x-0.5">
-                        {[...Array(2)].map((_, i) => (
-                          <div key={i} className={`w-1.5 h-1.5 rounded-full ${i < game.outs ? 'bg-red-500' : 'bg-gray-600'}`}></div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
             
             {/* Current At-Bat Section */}
             <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 text-center">
@@ -894,8 +985,42 @@ const rollForAtBatResult = () => {
             </div>
           )}
           {/* Right Column: Baseball Diamond */}
-          <div className="flex-1 flex flex-col items-center">
-            
+          <div className="flex-1 flex flex-col">
+            <div className="grid grid-cols-2 gap-1">
+              {/* Compact Scoreboard Bug - Upper Left */}
+              <div className="bg-gray-900 p-1 rounded-lg shadow-lg border border-gray-700 w-36 mb-6">
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-blue-400 font-bold">Away</span>
+                    <span className="text-white font-bold">{game.score.away}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-red-400 font-bold">Home</span>
+                    <span className="text-white font-bold">{game.score.home}</span>
+                  </div>
+                  <div className="border-t border-gray-700 pt-1">
+                    <div className="flex justify-between items-center">
+                      <span className={`font-bold text-xs ${isTopInning ? 'text-blue-400' : 'text-red-400'}`}>
+                        {isTopInning ? 'Top' : 'Bot'} {Math.floor(game.inning)}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <span className="text-gray-400 text-xs">Outs</span>
+                        <div className="flex space-x-0.5">
+                          {[...Array(2)].map((_, i) => (
+                            <div key={i} className={`w-1.5 h-1.5 rounded-full ${i < game.outs ? 'bg-red-500' : 'bg-gray-600'}`}></div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Infield Fielding Sum */}
+              <div className="bg-gray-800 p-1 rounded-lg shadow-lg border-2 border-green-500 text-center transition-all duration-500 w-36 mb-6">
+                  <h4 className="font-bold text-xs mb-1 text-blue-400">Infield Fielding Sum</h4>
+                  <p className="text-2xl font-extrabold text-white mt-1">{totalInfieldFielding}</p>
+              </div>
+            </div>                
             {/* Bases display with SVG - Bigger */}
             <div className="flex justify-center">
               <svg width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" className="text-gray-600">
@@ -962,18 +1087,46 @@ const rollForAtBatResult = () => {
                         </div>
                     </div>
                 )}
-                {/* Infield Fielding Sum */}
-                <div className="bg-gray-800 h-24 p-2 rounded-xl border-2 border-green-500 text-center transition-all duration-500">
-                    <h4 className="font-bold text-sm mb-1 text-blue-400">Infield Fielding Sum</h4>
-                    <p className="text-2xl font-extrabold text-white mt-2">{totalInfieldFielding}</p>
-                </div>
+                
             </div>
             {/* Last Play Result */}
             <div className="text-center mt-6">
-              <div className="text-lg font-bold text-blue-400">
-                {game.lastResult ? `Last Play: ${game.lastResult}` : 'Game in Progress'}
+            {game.lastPlay ? (
+              <div className="bg-gray-800 p-4 rounded-xl shadow-inner border-2 border-gray-700">
+                <h3 className="text-sm font-bold text-gray-400 mb-2">Last Play</h3>
+                <div className="text-md text-white font-semibold leading-relaxed">
+                  {/* Display the batter's outcome */}
+                  <p>
+                    <span className="font-bold text-red-400">Batter Result:</span> {game.lastPlay.batterOutcome?.text}
+                  </p>
+                  {/* Check if there are runners to report on and display them */}
+                  {game.lastPlay.runners && game.lastPlay.runners.length > 0 && (
+                    <p className="mt-2">
+                      <span className="font-bold text-blue-400">Runner(s):</span> {getRunnerDetails(game.lastPlay.runners)}
+                    </p>
+                  )}
+
+                  
+                  {/* You can add a check for fielding plays here as well */}
+                  {game.lastPlay.fieldingAttempt && game.lastPlay.fieldingAttempt.type === 'doublePlay' && (
+                      <p className="mt-2">
+                        <span className="font-bold text-green-400">Fielding:</span>{' '}
+                        {game.lastPlay.fieldingAttempt.successful ? (
+                          'Double play attempted and successful!'
+                        ) : (
+                          'FIELDER\'S CHOICE! The batter beats the throw to first and is safe.'
+                        )}
+                      </p>
+                  )}
+                </div>
               </div>
-            </div>              
+            ) : (
+              <div className="text-lg font-bold text-blue-400">
+                Game in Progress
+              </div>
+            )}
+          </div> 
+
           </div>
         </div>
         
